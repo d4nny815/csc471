@@ -14,13 +14,14 @@ BoundingBox::BoundingBox() {
     return;
 }
 
-void BoundingBox::calc_box(const std::array<Vertex, 3>& vertices) {
+void BoundingBox::calc_box(const std::vector<Vertex>& vertices) {
     for (Vertex v : vertices) {
         if (this->x_max < v.x) this->x_max = v.x;
         if (this->x_min > v.x) this->x_min = v.x;
 
         if (this->y_max < v.y) this->y_max = v.y;
         if (this->y_min > v.y) this->y_min = v.y;
+        // printf("Vertex (%d, %d)\n", v.x, v.y);
     }
 
     return;

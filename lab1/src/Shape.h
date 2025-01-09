@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <array>
+#include <vector>
 #include <climits>
 
 class Vertex {
@@ -17,7 +18,7 @@ class Vertex {
 class BoundingBox {
 	public:
 		BoundingBox();
-        void calc_box(const std::array<Vertex, 3>& vertices);
+        void calc_box(const std::vector<Vertex>& vertices);
 		int x_min;
 		int x_max;
 		int y_min;
