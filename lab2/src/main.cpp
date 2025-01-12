@@ -13,6 +13,7 @@ using namespace std;
 
 #define MIN_ARG_LEN	(10)
 
+
 int main(int argc, char **argv)
 {
 	if(argc < MIN_ARG_LEN) {
@@ -31,7 +32,7 @@ int main(int argc, char **argv)
 
 	srand(time(0)); // set the seed to cur time so rand colors
 
-	BoundingBox box;
+	BoundingBox bbox;
 
 	int vertex_arg = 4;
 	std::vector<Vertex> vertices; 
@@ -39,24 +40,24 @@ int main(int argc, char **argv)
 		int x = atoi(argv[vertex_arg++]);
 		int y = atoi(argv[vertex_arg++]);
 		Color c = Color(rand() % 255, rand() % 255, rand() % 255);
-		// printf("%hhu, %hhu, %hhu\n", c.r, c.g, c.b);
 		vertices.push_back(Vertex(x, y, c));
 	}
-	box.calc_box(vertices);
-	// printf("Box (%d, %d) -> (%d, %d)\n", 
-		// box.x_min, box.x_max, box.y_min, box.y_max);
+	bbox.calc_box(vertices);
 	
-	// Draw a rectangle
-	for(int y = box.y_min; y <= box.y_max; ++y) {
-		for(int x = box.x_min; x <= box.x_max; ++x) {
-			unsigned char r = 255;
-			unsigned char g = 255;
-			unsigned char b = 255;
-			image->setPixel(x, y, r, g, b);
+	// draw bounding box
+	for(int y = bbox.y_min; y <= bbox.y_max; ++y) {
+		for(int x = bbox.x_min; x <= bbox.x_max; ++x) {
+			// unsigned char r = 255;
+			// unsigned char g = 255;
+			// unsigned char b = 255;
+
+			// Vertex p = Vertex(x, y, Color());
+
+			// image->setPixel(x, y, r, g, b);
 		}
 	}
 
-	for (Vertex v : vertices) {
+	for (const Vertex& v : vertices) {
 		image->setPixel(v.x, v.y, v.color.r, v.color.g, v.color.b);
 	}
 
@@ -64,3 +65,4 @@ int main(int argc, char **argv)
 	image->writeToFile(filename);
 	return 0;
 }
+
