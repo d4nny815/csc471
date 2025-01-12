@@ -24,7 +24,10 @@ public:
     BaryCoord(float alpha, float beta, float gamma)
         : alpha(alpha), beta(beta), gamma(gamma) {}
     
+	
 	float alpha, beta, gamma;
+	
+	bool in_triangle();
 	void print() {
 		printf("Bary (%f, %f, %f)\n", alpha, beta, gamma);
 	}

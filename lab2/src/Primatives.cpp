@@ -1,5 +1,10 @@
 #include "Primatives.h"
 
+
+// =============================================================================
+// Vertex
+// =============================================================================
+
 Vertex::Vertex(int x, int y, Color c) {
     this->x = x;
     this->y = y;
@@ -9,15 +14,6 @@ Vertex::Vertex(int x, int y, Color c) {
 
 Vector Vertex::get_vector(const Vertex& vertex) const {
     return Vector(vertex.x - this->x, vertex.y - this->y);
-}
-
-int Vector::dot(const Vector& vec) {
-    return this->i * vec.i + this->j * vec.j;
-}
-
-// cross(v0,v1)= v0​.x⋅v1​.y−v0​.y⋅v1​.x        
-int Vector::cross(const Vector& vec) {
-    return this->i * vec.j - this->j * vec.i;
 }
 
 BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b, 
@@ -36,6 +32,32 @@ BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b,
     return bary;
 }
 
+
+// =============================================================================
+// Vector
+// =============================================================================
+
+int Vector::dot(const Vector& vec) {
+    return this->i * vec.i + this->j * vec.j;
+}
+
+// cross(v0,v1)= v0​.x⋅v1​.y−v0​.y⋅v1​.x        
+int Vector::cross(const Vector& vec) {
+    return this->i * vec.j - this->j * vec.i;
+}
+
+
+// =============================================================================
+// Barycentric Coord
+// =============================================================================
+bool BaryCoord::in_triangle() {
+    return (this->alpha >= 0 && this->beta >= 0 && this->gamma >= 0 && 
+        (this->alpha + this->beta + this->gamma == 1));
+}
+
+// =============================================================================
+// Bounding Box
+// =============================================================================
 
 BoundingBox::BoundingBox() {
     this->x_min = INT_MAX;

@@ -47,12 +47,26 @@ int main(int argc, char **argv)
 	// draw bounding box
 	for(int y = bbox.y_min; y <= bbox.y_max; ++y) {
 		for(int x = bbox.x_min; x <= bbox.x_max; ++x) {
-			// unsigned char r = 255;
-			// unsigned char g = 255;
-			// unsigned char b = 255;
+			Vertex p = Vertex(x, y, Color());
 
-			// Vertex p = Vertex(x, y, Color());
+			BaryCoord bary = p.calc_bary_coords(vertices[0], vertices[1], 
+												vertices[2]);
 
+			if (bary.in_triangle()) {
+				p.color.r = bary.alpha * vertices[0].color.r + 
+							bary.beta * vertices[1].color.r +
+							bary.gamma * vertices[2].color.r;
+
+				p.color.g = bary.alpha * vertices[0].color.g + 
+							bary.beta * vertices[1].color.g +
+							bary.gamma * vertices[2].color.g;
+
+				p.color.b = bary.alpha * vertices[0].color.b + 
+							bary.beta * vertices[1].color.b +
+							bary.gamma * vertices[2].color.b;
+			}
+
+			image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
 			// image->setPixel(x, y, r, g, b);
 		}
 	}
