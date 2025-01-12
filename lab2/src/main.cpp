@@ -1,5 +1,4 @@
-// ./Lab02 out.png 200 200 2 2 50 60 150 170
-
+// ./Lab02 out.png 400 300 2 2 100 60 120 190
 #include <iostream>
 #include <string>
 #include <vector>
@@ -36,11 +35,12 @@ int main(int argc, char **argv)
 
 	int vertex_arg = 4;
 	std::vector<Vertex> vertices; 
+	std::array<Color, 3> colors = {Color(255, 0, 0), Color(0, 255, 0), 
+									Color(0, 0, 255)};
 	for (int i = 0; i < 3; i++) {
 		int x = atoi(argv[vertex_arg++]);
 		int y = atoi(argv[vertex_arg++]);
-		Color c = Color(rand() % 255, rand() % 255, rand() % 255);
-		vertices.push_back(Vertex(x, y, c));
+		vertices.push_back(Vertex(x, y, colors[i]));
 	}
 	bbox.calc_box(vertices);
 	
@@ -64,10 +64,8 @@ int main(int argc, char **argv)
 				p.color.b = bary.alpha * vertices[0].color.b + 
 							bary.beta * vertices[1].color.b +
 							bary.gamma * vertices[2].color.b;
+				image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
 			}
-
-			image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
-			// image->setPixel(x, y, r, g, b);
 		}
 	}
 

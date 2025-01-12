@@ -5,15 +5,8 @@
 // Vertex
 // =============================================================================
 
-Vertex::Vertex(int x, int y, Color c) {
-    this->x = x;
-    this->y = y;
-    this->color = c;
-    return;
-}
-
 Vector Vertex::get_vector(const Vertex& vertex) const {
-    return Vector(vertex.x - this->x, vertex.y - this->y);
+    return Vector(vertex.x - x, vertex.y - y);
 }
 
 BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b, 
@@ -22,12 +15,12 @@ BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b,
     BaryCoord bary;
 
     int area_abc = a.get_vector(b).cross(a.get_vector(c));
-    bary.alpha = (float)(this->get_vector(b).cross(this->get_vector(c))) / 
+    bary.alpha = (float)(get_vector(b).cross(get_vector(c))) / 
                 area_abc;
-    bary.beta = (float)(this->get_vector(c).cross(this->get_vector(a))) / 
+    bary.beta = (float)(get_vector(c).cross(get_vector(a))) / 
                 area_abc;
     bary.gamma = 1.0 - bary.alpha - bary.beta;
-    // bary.gamma = this->get_vector(a).cross(this->get_vector(b)) / area_abc;
+    // bary.gamma = get_vector(a).cross(get_vector(b)) / area_abc;
 
     return bary;
 }
@@ -38,42 +31,35 @@ BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b,
 // =============================================================================
 
 int Vector::dot(const Vector& vec) {
-    return this->i * vec.i + this->j * vec.j;
+    return i * vec.i + j * vec.j;
 }
 
 // cross(v0,v1)= v0​.x⋅v1​.y−v0​.y⋅v1​.x        
 int Vector::cross(const Vector& vec) {
-    return this->i * vec.j - this->j * vec.i;
+    return i * vec.j - j * vec.i;
 }
 
 
 // =============================================================================
 // Barycentric Coord
 // =============================================================================
+#define TOLERANCE   (1e-3f)
 bool BaryCoord::in_triangle() {
-    return (this->alpha >= 0 && this->beta >= 0 && this->gamma >= 0 && 
-        (this->alpha + this->beta + this->gamma == 1));
+    return alpha >= 0 && beta >= 0 && gamma >= 0 &&
+           std::abs(alpha + beta + gamma - 1.0f) < TOLERANCE;
 }
 
 // =============================================================================
 // Bounding Box
 // =============================================================================
 
-BoundingBox::BoundingBox() {
-    this->x_min = INT_MAX;
-    this->x_max = INT_MIN;
-    this->y_min = INT_MAX;
-    this->y_max = INT_MIN;
-    return;
-}
-
 void BoundingBox::calc_box(const std::vector<Vertex>& vertices) {
     for (Vertex v : vertices) {
-        if (this->x_max < v.x) this->x_max = v.x;
-        if (this->x_min > v.x) this->x_min = v.x;
+        if (x_max < v.x) x_max = v.x;
+        if (x_min > v.x) x_min = v.x;
 
-        if (this->y_max < v.y) this->y_max = v.y;
-        if (this->y_min > v.y) this->y_min = v.y;
+        if (y_max < v.y) y_max = v.y;
+        if (y_min > v.y) y_min = v.y;
     }
 
     return;

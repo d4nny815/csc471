@@ -20,7 +20,7 @@ class Color {
 
 class BaryCoord {
 public:
-    BaryCoord() : alpha(0.0), beta(0.0), gamma(0.0) {}
+    BaryCoord() : alpha(0.0f), beta(0.0f), gamma(0.0f) {}
     BaryCoord(float alpha, float beta, float gamma)
         : alpha(alpha), beta(beta), gamma(gamma) {}
     
@@ -36,7 +36,7 @@ public:
 class Vertex {
 	public:
         Vertex() : x(0), y(0), color(Color()) {}
-		Vertex(int x, int y, Color c);
+		Vertex(int x, int y, Color c) : x(x), y(y), color(c) {}
 		
 		int x;
 		int y;
@@ -70,7 +70,8 @@ class Vector {
 
 class BoundingBox {
 	public:
-		BoundingBox();
+		BoundingBox() : x_min(INT_MAX), x_max(INT_MIN), 
+						y_min(INT_MAX), y_max(INT_MIN) {}
 		
 		int x_min;
 		int x_max;
