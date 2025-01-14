@@ -45,7 +45,7 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
       }
    }
 
-	//From min and max compute necessary scale and shift for each dimension
+    //From min and max compute necessary scale and shift for each dimension
    float maxExtent, xExtent, yExtent, zExtent;
    xExtent = maxX-minX;
    yExtent = maxY-minY;
@@ -85,47 +85,65 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
 
 int main(int argc, char **argv)
 {
-	if(argc < 3) {
+    if(argc < 3) {
       cout << "Usage: raster meshfile imagefile" << endl;
       return 0;
    }
-	// OBJ filename
-	string meshName(argv[1]);
-	string imgName(argv[2]);
+    // OBJ filename
+    string meshName(argv[1]);
+    string imgName(argv[2]);
 
-	//set g_width and g_height appropriately!
-	g_width = g_height = 100;
+   // TODO: take in screen size 
+    //set g_width and g_height appropriately!
+    g_width = g_height = 100;
 
    //create an image
-	auto image = make_shared<Image>(g_width, g_height);
+   // TODO: what is a shared pointer
+    auto image = make_shared<Image>(g_width, g_height);
 
-	// triangle buffer
-	vector<unsigned int> triBuf;
-	// position buffer
-	vector<float> posBuf;
-	// Some obj files contain material information.
-	// We'll ignore them for this assignment.
-	vector<tinyobj::shape_t> shapes; // geometry
-	vector<tinyobj::material_t> objMaterials; // material
-	string errStr;
-	
+    // triangle buffer
+    vector<unsigned int> triBuf;
+    // position buffer
+    vector<float> posBuf;
+    // Some obj files contain material information.
+    // We'll ignore them for this assignment.
+    vector<tinyobj::shape_t> shapes; // geometry
+    vector<tinyobj::material_t> objMaterials; // material
+    string errStr;
+    
    bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr, meshName.c_str());
-	/* error checking on read */
-	if(!rc) {
-		cerr << errStr << endl;
-	} else {
- 		//keep this code to resize your object to be within -1 -> 1
-   	resize_obj(shapes); 
-		posBuf = shapes[0].mesh.positions;
-		triBuf = shapes[0].mesh.indices;
-	}
-	cout << "Number of vertices: " << posBuf.size()/3 << endl;
-	cout << "Number of triangles: " << triBuf.size()/3 << endl;
+    /* error checking on read */
+    if(!rc) {
+        cerr << errStr << endl;
+    } else {
+        //keep this code to resize your object to be within -1 -> 1
+        resize_obj(shapes); 
+        posBuf = shapes[0].mesh.positions;
+        triBuf = shapes[0].mesh.indices;
+    }
+    cout << "Number of vertices: " << posBuf.size()/3 << endl;
+    cout << "Number of triangles: " << triBuf.size()/3 << endl;
 
-	//TODO add code to iterate through each triangle and rasterize it 
-	
-	//write out the image
+    //TODO add code to iterate through each triangle and rasterize it 
+    /**
+     * Knowns: triangles already in world space
+     * need to convert to pixel space
+     * 
+     * this should print every triangle (will be overlapping)
+     * for each triangle
+     *      for each pixel in triangle
+     *          compute bounding box
+     *          if pixel in triangle 
+     *              print pixel
+     */
+
+    
+
+
+
+
+    //write out the image
    image->writeToFile(imgName);
 
-	return 0;
+    return 0;
 }
