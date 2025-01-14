@@ -88,17 +88,17 @@ int main(int argc, char **argv)
     if(argc < 3) {
       cout << "Usage: raster meshfile imagefile" << endl;
       return 0;
-   }
+    }
     // OBJ filename
     string meshName(argv[1]);
     string imgName(argv[2]);
 
-   // TODO: take in screen size 
+    // TODO: take in screen size 
     //set g_width and g_height appropriately!
     g_width = g_height = 100;
 
-   //create an image
-   // TODO: what is a shared pointer
+    //create an image
+    // TODO: what is a shared pointer
     auto image = make_shared<Image>(g_width, g_height);
 
     // triangle buffer
@@ -123,6 +123,15 @@ int main(int argc, char **argv)
     }
     cout << "Number of vertices: " << posBuf.size()/3 << endl;
     cout << "Number of triangles: " << triBuf.size()/3 << endl;
+    for (auto index : shapes[0].mesh.indices) {
+        cout << "index: " << index << endl;
+    }
+    for (auto position : shapes[0].mesh.positions) {
+        cout << "position: " << position << endl;
+    }
+    for (auto normal : shapes[0].mesh.normals) {
+        cout << "normal: " << normal << endl;
+    }
 
     //TODO add code to iterate through each triangle and rasterize it 
     /**
