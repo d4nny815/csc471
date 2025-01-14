@@ -26,7 +26,6 @@ BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b,
     return bary;
 }
 
-
 // =============================================================================
 // Vector
 // =============================================================================
@@ -68,3 +67,6 @@ void BoundingBox::calc_box(const std::vector<Vertex>& vertices) {
 
     return;
 }
+
+
+
