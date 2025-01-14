@@ -42,8 +42,8 @@ int main(int argc, char **argv)
 	bbox.calc_box(vertices);
 	
 	// draw bounding box
-	for (int y = bbox.y_min; y < bbox.y_max; ++y) {
-		for (int x = bbox.x_min; x < bbox.x_max; ++x) {
+	for (int y = bbox.y_min; y <= bbox.y_max; ++y) {
+		for (int x = bbox.x_min; x <= bbox.x_max; ++x) {
 			Vertex p = Vertex(x, y, Color());
 
 			BaryCoord bary = p.calc_bary_coords(vertices[0], vertices[1], 
