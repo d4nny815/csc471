@@ -8,6 +8,7 @@
 
 #include "tiny_obj_loader.h"
 #include "Image.h"
+#include "Primatives.h"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -123,6 +124,8 @@ int main(int argc, char **argv)
     }
     cout << "Number of vertices: " << posBuf.size()/3 << endl;
     cout << "Number of triangles: " << triBuf.size()/3 << endl;
+    
+    
     for (auto index : shapes[0].mesh.indices) {
         cout << "index: " << index << endl;
     }
