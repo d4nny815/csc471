@@ -1,6 +1,5 @@
 #include "Primatives.h"
 
-
 // =============================================================================
 // Vertex
 // =============================================================================
@@ -15,12 +14,14 @@ BaryCoord Vertex::calc_bary_coords(const Vertex& a, const Vertex& b,
     BaryCoord bary;
 
     int area_abc = a.get_vector(b).cross(a.get_vector(c));
-    bary.alpha = (float)(get_vector(b).cross(get_vector(c))) / 
-                area_abc;
-    bary.beta = (float)(get_vector(c).cross(get_vector(a))) / 
-                area_abc;
-    bary.gamma = 1.0 - bary.alpha - bary.beta;
-    // bary.gamma = get_vector(a).cross(get_vector(b)) / area_abc;
+    int area_a = this->get_vector(b).cross(this->get_vector(c));
+    int area_b = this->get_vector(c).cross(this->get_vector(a));
+    int area_c = this->get_vector(a).cross(this->get_vector(b));
+
+
+    bary.alpha = static_cast<float>(area_a) / area_abc;
+    bary.beta = static_cast<float>(area_b) / area_abc;
+    bary.gamma = static_cast<float>(area_c) / area_abc;
 
     return bary;
 }
@@ -43,10 +44,13 @@ int Vector::cross(const Vector& vec) {
 // =============================================================================
 // Barycentric Coord
 // =============================================================================
-#define TOLERANCE   (1e-3f)
+#define TOLERANCE   (1e-6f)
 bool BaryCoord::in_triangle() {
+    // return (0 < alpha && alpha < 1) && (0 < beta && beta < 1) &&
+            // (0 < gamma && gamma < 1);
+
     return alpha >= 0 && beta >= 0 && gamma >= 0 &&
-           std::abs(alpha + beta + gamma - 1.0f) < TOLERANCE;
+           std::abs(1.0f - alpha - beta - gamma) < TOLERANCE;
 }
 
 // =============================================================================

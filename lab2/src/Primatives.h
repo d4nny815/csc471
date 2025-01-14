@@ -48,7 +48,9 @@ class Vertex {
 
 };
 
-
+// ? might have to change def to dir and magnitude?
+// ? is that a ray?
+// ? what is the difference?
 class Vector {
 	public:
 		Vector() : i(0), j(0) {} 
@@ -61,12 +63,6 @@ class Vector {
 		int cross(const Vector& vec);
 
 };
-// ? might have to change def to dir and magnitude?
-// ? is that a ray?
-// ? what is the difference?
-
-
-
 
 class BoundingBox {
 	public:

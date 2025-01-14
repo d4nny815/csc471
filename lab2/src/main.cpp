@@ -12,7 +12,6 @@ using namespace std;
 
 #define MIN_ARG_LEN	(10)
 
-
 int main(int argc, char **argv)
 {
 	if(argc < MIN_ARG_LEN) {
@@ -29,8 +28,6 @@ int main(int argc, char **argv)
 	// Create the image. We're using a `shared_ptr`, a C++11 feature.
 	auto image = make_shared<Image>(width, height);
 
-	srand(time(0)); // set the seed to cur time so rand colors
-
 	BoundingBox bbox;
 
 	int vertex_arg = 4;
@@ -45,8 +42,8 @@ int main(int argc, char **argv)
 	bbox.calc_box(vertices);
 	
 	// draw bounding box
-	for(int y = bbox.y_min; y <= bbox.y_max; ++y) {
-		for(int x = bbox.x_min; x <= bbox.x_max; ++x) {
+	for (int y = bbox.y_min; y < bbox.y_max; ++y) {
+		for (int x = bbox.x_min; x < bbox.x_max; ++x) {
 			Vertex p = Vertex(x, y, Color());
 
 			BaryCoord bary = p.calc_bary_coords(vertices[0], vertices[1], 
@@ -65,12 +62,10 @@ int main(int argc, char **argv)
 							bary.beta * vertices[1].color.b +
 							bary.gamma * vertices[2].color.b;
 				image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
+			} else {
+				image->setPixel(x, y, 255, 255, 255);
 			}
 		}
-	}
-
-	for (const Vertex& v : vertices) {
-		image->setPixel(v.x, v.y, v.color.r, v.color.g, v.color.b);
 	}
 
 	// Write image to file
