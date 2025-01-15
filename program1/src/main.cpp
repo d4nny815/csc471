@@ -16,11 +16,18 @@
 using namespace std;
 
 int g_width, g_height;
+float width_scalar, width_offset, height_scalar, height_offset; 
+
 
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices);
 void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
                     const std::vector<Vertex>& vertices, std::vector<Face>& faces);
+
+int world2px(float x);
+int world2py(float y);
+
+
 /*
    Helper function you will want all quarter
    Given a vector of shapes which has already been read from an obj file
@@ -100,7 +107,8 @@ int main(int argc, char **argv)
 
     // TODO: take in screen size 
     //set g_width and g_height appropriately!
-    g_width = g_height = 100;
+    g_width = 600;
+    g_height = 300;
 
     //create an image
     // TODO: what is a shared pointer
@@ -129,25 +137,45 @@ int main(int argc, char **argv)
     cout << "Number of vertices: " << posBuf.size()/3 << endl;
     cout << "Number of triangles: " << triBuf.size()/3 << endl;
     
-    // for (auto i : triBuf) {
-        // cout << i + 1 << ", ";
-        // cout << i << ", ";
-    // }
-    // cout << endl;
-
     std::vector<Vertex> vertices;
     std::vector<Face> faces;
     mesh2vertices(posBuf, vertices);
     mesh2triangles(triBuf.size() / 3, triBuf, vertices, faces);
 
+    // ! make sure i get the correct number of prims out
     assert(vertices.size() == posBuf.size() / 3);
     assert(faces.size() == triBuf.size() / 3);
 
+    // convert from world space to pixel space
+    // calc view volume
+    // TODO: make a class
+    float left, right, top, bottom; // TODO: far and near
+    if (g_width >= g_height) {
+        right = static_cast<float>(g_width) / g_height;
+        left = static_cast<float>(-g_width) / g_height;
+        top = 1;
+        bottom = -1;
+    } else {
+        top = static_cast<float>(g_height) / g_width;
+        bottom = static_cast<float>(-g_height) / g_width;
+        left = -1;
+        right = 1;
+    }
 
-    // TODO: convert every vertex from obj into a vertex
-    // TODO: make a face using  
+    // printf("vvolume(%f, %f, %f, %f)\n", left, right, bottom, top);
 
-    //TODO add code to iterate through each triangle and rasterize it 
+    // calc pixel position
+    // float width_scalar, width_offset, height_scalar, height_offset; 
+    width_scalar = (g_width - 1) / (right - left);
+    width_offset = -left * width_scalar;
+
+    height_scalar = (g_height - 1) / (top - bottom);
+    height_offset = -bottom * height_scalar;
+
+    for (auto f : faces) {
+        
+    }
+
     /**
      * Knowns: triangles already in world space
      * need to convert to pixel space
@@ -189,18 +217,23 @@ void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indi
 
     int face_ind = 0;
     for (int i = 0; i < n_triangles; i++) {
-    // for (int i = 0; i < 3; i++) {
         unsigned int i0, i1, i2;
         i0 = indices[face_ind];
         i1 = indices[face_ind + 1];
         i2 = indices[face_ind + 2];
 
-        printf("INDEX: %d, %d, %d\n", i0 + 1, i1 + 1, i2 + 1);
         Face f = Face(vertices[i0], vertices[i1], vertices[i2]);
         faces.push_back(f);
-        f.print();
         face_ind += 3;
     }
 
     return;
+}
+
+int w2px(float x) {
+    return width_scalar * x + width_offset;
+}
+
+int w2py(float y) {
+    return height_scalar * y + height_offset;
 }

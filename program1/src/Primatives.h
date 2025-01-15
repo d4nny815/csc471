@@ -84,6 +84,14 @@ public:
 
 };
 
+class Pixel {
+public:
+    Pixel() : x(0), y(0) {}
+    Pixel(int x, int y) : x(x), y(y) {}
+    
+    int x, y;
+};
+
 class BoundingBox {
 public:
     BoundingBox() : x_min(INT_MAX), x_max(INT_MIN), 
