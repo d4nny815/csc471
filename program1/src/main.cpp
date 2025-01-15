@@ -17,6 +17,10 @@ using namespace std;
 
 int g_width, g_height;
 
+void mesh2vertices(const std::vector<float>& positions, 
+                    std::vector<Vertex>& vertices);
+void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
+                    const std::vector<Vertex>& vertices, std::vector<Face>& faces);
 /*
    Helper function you will want all quarter
    Given a vector of shapes which has already been read from an obj file
@@ -125,16 +129,23 @@ int main(int argc, char **argv)
     cout << "Number of vertices: " << posBuf.size()/3 << endl;
     cout << "Number of triangles: " << triBuf.size()/3 << endl;
     
-    
-    for (auto index : shapes[0].mesh.indices) {
-        cout << "index: " << index << endl;
-    }
-    for (auto position : shapes[0].mesh.positions) {
-        cout << "position: " << position << endl;
-    }
-    for (auto normal : shapes[0].mesh.normals) {
-        cout << "normal: " << normal << endl;
-    }
+    // for (auto i : triBuf) {
+        // cout << i + 1 << ", ";
+        // cout << i << ", ";
+    // }
+    // cout << endl;
+
+    std::vector<Vertex> vertices;
+    std::vector<Face> faces;
+    mesh2vertices(posBuf, vertices);
+    mesh2triangles(triBuf.size() / 3, triBuf, vertices, faces);
+
+    assert(vertices.size() == posBuf.size() / 3);
+    assert(faces.size() == triBuf.size() / 3);
+
+
+    // TODO: convert every vertex from obj into a vertex
+    // TODO: make a face using  
 
     //TODO add code to iterate through each triangle and rasterize it 
     /**
@@ -158,4 +169,38 @@ int main(int argc, char **argv)
    image->writeToFile(imgName);
 
     return 0;
+}
+
+
+void mesh2vertices(const std::vector<float>& positions, 
+                    std::vector<Vertex>& vertices) {
+
+    
+    for (size_t i = 0; i < positions.size(); i += 3) {
+        vertices.push_back(Vertex(positions[i], positions[i + 1], 
+                            positions[i + 2], Color()));
+    }
+
+    return;
+}
+
+void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
+                    const std::vector<Vertex>& vertices, std::vector<Face>& faces) {
+
+    int face_ind = 0;
+    for (int i = 0; i < n_triangles; i++) {
+    // for (int i = 0; i < 3; i++) {
+        unsigned int i0, i1, i2;
+        i0 = indices[face_ind];
+        i1 = indices[face_ind + 1];
+        i2 = indices[face_ind + 2];
+
+        printf("INDEX: %d, %d, %d\n", i0 + 1, i1 + 1, i2 + 1);
+        Face f = Face(vertices[i0], vertices[i1], vertices[i2]);
+        faces.push_back(f);
+        f.print();
+        face_ind += 3;
+    }
+
+    return;
 }
