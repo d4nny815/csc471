@@ -172,8 +172,10 @@ int main(int argc, char **argv)
     height_scalar = (g_height - 1) / (top - bottom);
     height_offset = -bottom * height_scalar;
 
+    
+
     for (auto f : faces) {
-        
+
     }
 
     /**
