@@ -4,7 +4,7 @@
 #include <iostream>
 #include <array>
 #include <vector>
-#include <climits>
+// #include <climits>
 
 class Vector;
 
@@ -84,22 +84,22 @@ public:
 
 };
 
-class Pixel {
-public:
-    Pixel() : x(0), y(0) {}
-    Pixel(int x, int y) : x(x), y(y) {}
+// class Pixel {
+// public:
+//     Pixel() : x(0), y(0) {}
+//     Pixel(int x, int y) : x(x), y(y) {}
     
-    int x, y;
-};
+//     int x, y;
+// };
 
-class BoundingBox {
-public:
-    BoundingBox() : x_min(INT_MAX), x_max(INT_MIN), 
-                    y_min(INT_MAX), y_max(INT_MIN) {}
+// class BoundingBox {
+// public:
+//     BoundingBox() : x_min(INT_MAX), x_max(INT_MIN), 
+//                     y_min(INT_MAX), y_max(INT_MIN) {}
     
-    int x_min, x_max, y_min, y_max;
+//     int x_min, x_max, y_min, y_max;
 
-    void calc_box(const std::vector<Vertex>& vertices);
-};
+//     void calc_box(const std::vector<Vertex>& vertices);
+// };
 
 #endif

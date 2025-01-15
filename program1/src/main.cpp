@@ -9,6 +9,8 @@
 #include "tiny_obj_loader.h"
 #include "Image.h"
 #include "Primatives.h"
+#include "WorldSpace.h"
+#include "PixelSpace.h"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -24,8 +26,8 @@ void mesh2vertices(const std::vector<float>& positions,
 void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
                     const std::vector<Vertex>& vertices, std::vector<Face>& faces);
 
-int world2px(float x);
-int world2py(float y);
+int w2px(float x);
+int w2py(float y);
 
 
 /*
@@ -147,35 +149,68 @@ int main(int argc, char **argv)
     assert(faces.size() == triBuf.size() / 3);
 
     // convert from world space to pixel space
+    
     // calc view volume
-    // TODO: make a class
-    float left, right, top, bottom; // TODO: far and near
-    if (g_width >= g_height) {
-        right = static_cast<float>(g_width) / g_height;
-        left = static_cast<float>(-g_width) / g_height;
-        top = 1;
-        bottom = -1;
-    } else {
-        top = static_cast<float>(g_height) / g_width;
-        bottom = static_cast<float>(-g_height) / g_width;
-        left = -1;
-        right = 1;
-    }
+    ViewVolume vvolume;
+    vvolume.calc_vvolume(g_width, g_height);
+    // vvolume.print();
 
-    // printf("vvolume(%f, %f, %f, %f)\n", left, right, bottom, top);
+    width_scalar = (g_width - 1) / (vvolume.right - vvolume.left);
+    width_offset = -vvolume.left * width_scalar;
+    height_scalar = (g_height - 1) / (vvolume.top - vvolume.bottom);
+    height_offset = -vvolume.bottom * height_scalar;
 
+    std::vector<PixelTriangle> pixels;
     // calc pixel position
-    // float width_scalar, width_offset, height_scalar, height_offset; 
-    width_scalar = (g_width - 1) / (right - left);
-    width_offset = -left * width_scalar;
-
-    height_scalar = (g_height - 1) / (top - bottom);
-    height_offset = -bottom * height_scalar;
-
-    std::vector<Pixel> pixels;
+    // ? could just be all indices?
     for (auto f : faces) {
-        // pixels.push_back(Pixel(w2px(f.4)))
+        Pixel pixel_vert[3];
+        pixel_vert[0] = Pixel(w2px(f.v0.x), w2py(f.v0.y), f.v0.z, Color());
+        pixel_vert[1] = Pixel(w2px(f.v1.x), w2py(f.v1.y), f.v1.z, Color());
+        pixel_vert[2] = Pixel(w2px(f.v2.x), w2py(f.v2.y), f.v2.z, Color());
+
+        pixels.push_back(PixelTriangle(pixel_vert[0], pixel_vert[1], 
+                                        pixel_vert[2]));
     }
+
+    // bbox.calc_box(pixels);
+    // bbox.print();
+    for (PixelTriangle pt : pixels) {
+        BoundingBox bbox;
+        bbox.calc_box(pt.pixels);
+
+        for (int y = bbox.x_min; y <= bbox.x_max; ++y) {
+		    for (int x = bbox.x_min; x <= bbox.x_max; ++x) {
+			    Pixel p = Pixel(x, y, 0, Color());
+
+			    BaryCoord bary = p.calc_bary_coords(pt.pixels[0], pt.pixels[1], 
+												pt.pixels[2]);
+
+			if (bary.in_triangle()) {
+				p.color.r = bary.alpha * pt.pixels[0].color.r + 
+							bary.beta * pt.pixels[1].color.r +
+							bary.gamma * pt.pixels[2].color.r;
+
+				p.color.g = bary.alpha * pt.pixels[0].color.g + 
+							bary.beta * pt.pixels[1].color.g +
+							bary.gamma * pt.pixels[2].color.g;
+
+				p.color.b = bary.alpha * pt.pixels[0].color.b + 
+							bary.beta * pt.pixels[1].color.b +
+							bary.gamma * pt.pixels[2].color.b;
+				image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
+			} else {
+				image->setPixel(x, y, 255, 255, 255);
+			}
+		}
+	}
+
+    }
+
+
+	
+
+
 
     /**
      * Knowns: triangles already in world space
@@ -188,11 +223,6 @@ int main(int argc, char **argv)
      *          if pixel in triangle 
      *              print pixel
      */
-
-    
-
-
-
 
     //write out the image
    image->writeToFile(imgName);

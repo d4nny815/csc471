@@ -52,21 +52,21 @@ bool BaryCoord::in_triangle() {
            std::abs(1.0f - alpha - beta - gamma) < TOLERANCE;
 }
 
-// =============================================================================
-// Bounding Box
-// =============================================================================
+// // =============================================================================
+// // Bounding Box
+// // =============================================================================
 
-void BoundingBox::calc_box(const std::vector<Vertex>& vertices) {
-    for (Vertex v : vertices) {
-        if (x_max < v.x) x_max = v.x;
-        if (x_min > v.x) x_min = v.x;
+// void BoundingBox::calc_box(const std::vector<Vertex>& vertices) {
+//     for (Vertex v : vertices) {
+//         if (x_max < v.x) x_max = v.x;
+//         if (x_min > v.x) x_min = v.x;
 
-        if (y_max < v.y) y_max = v.y;
-        if (y_min > v.y) y_min = v.y;
-    }
+//         if (y_max < v.y) y_max = v.y;
+//         if (y_min > v.y) y_min = v.y;
+//     }
 
-    return;
-}
+//     return;
+// }
 
 
 
