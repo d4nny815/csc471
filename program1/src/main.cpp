@@ -104,8 +104,8 @@ int main(int argc, char **argv)
 
     // TODO: take in screen size 
     //set g_width and g_height appropriately!
-    g_width = 600;
-    g_height = 300;
+    g_width = 720;
+    g_height = 480;
 
     //create an image
     // TODO: what is a shared pointer
@@ -140,32 +140,28 @@ int main(int argc, char **argv)
     mesh2triangles(triBuf.size() / 3, triBuf, vertices, faces);
     // * at this point in world space
     
-    // ! make sure i get the correct number of prims out
-    assert(vertices.size() == posBuf.size() / 3);
-    assert(faces.size() == triBuf.size() / 3);
-
     // calc view volume
     ViewVolume vvolume;
     vvolume.calc_vvolume(g_width, g_height);
-    vvolume.print();
+    // vvolume.print();
 
     PixelTransform pmatrix(g_width, g_height, vvolume);
-    pmatrix.print();
+    // pmatrix.print();
 
     std::vector<Color> frame_buf(g_width * g_height, Color());
-    // std::vector<uint8_t> z_buffer(g_width * g_height);
-
-    int ind;
+    std::vector<uint8_t> z_buffer(g_width * g_height);
 
     for (Face f : faces) {
-        f.print();
+        // f.print();
         PixelFace pf = PixelFace(f, pmatrix);
-        pf.print();
+        // pf.print();
+
+        
         
         BoundingBox bbox;
         bbox.calc_box(pf.pixels);
 
-        bbox.print();
+        // bbox.print();
 
         for (int y = bbox.y_min; y <= bbox.y_max; ++y) {
 		    for (int x = bbox.x_min; x <= bbox.x_max; ++x) {
@@ -173,7 +169,8 @@ int main(int argc, char **argv)
                 BaryCoord bary = p.calc_bary_coords(pf.pixels[0], pf.pixels[1], 
 												pf.pixels[2]);
 			    if (bary.in_triangle()) {
-                	p.color.r = bary.alpha * pf.pixels[0].color.r + 
+                	// p.color.print();
+                    p.color.r = bary.alpha * pf.pixels[0].color.r + 
 			    				bary.beta * pf.pixels[1].color.r +
 			    				bary.gamma * pf.pixels[2].color.r;
 			    	p.color.g = bary.alpha * pf.pixels[0].color.g + 
@@ -183,16 +180,20 @@ int main(int argc, char **argv)
 			    				bary.beta * pf.pixels[1].color.b +
 			    				bary.gamma * pf.pixels[2].color.b;
                     frame_buf[y * g_width + x] = p.color;
+
+                    // printf("x: %d y: %d index: %d\n", x, y, y * g_width + x);
+                    // p.color.prints();
+
                 }
             }
         }
+
+        // if (pf.pixels[0].z > 0) break;
 
     }
 
     for (int y = 0; y < g_height; y++) {
         for (int x = 0; x < g_width; x++) {
-            printf("x: %d y: %d index: %d\n", x, y, y * g_width + x);
-
             Color color = frame_buf[y * g_width + x];
             image->setPixel(x, y, color.r, color.g, color.b);
         }
@@ -208,9 +209,13 @@ void mesh2vertices(const std::vector<float>& positions,
                     std::vector<Vertex>& vertices) {
 
     
+    std::array<Color, 3> colors = {Color(255, 0, 0), Color(0, 255, 0), 
+									Color(0, 0, 255)};
     for (size_t i = 0; i < positions.size(); i += 3) {
+        Color c = colors[(rand() * rand()) % 3];
         vertices.push_back(Vertex(positions[i], positions[i + 1], 
-                            positions[i + 2], Color(255, 0, 0)));
+                            // positions[i + 2], Color(rand(), rand(), rand())));
+                            positions[i + 2], c));
     }
 
     return;
