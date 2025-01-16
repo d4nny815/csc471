@@ -182,10 +182,7 @@ int main(int argc, char **argv)
 			    	p.color.b = bary.alpha * pf.pixels[0].color.b + 
 			    				bary.beta * pf.pixels[1].color.b +
 			    				bary.gamma * pf.pixels[2].color.b;
-                    // printf("x: %d y: %d index: %d\n", x, y, y * g_height + x);
-                    // p.color.print();
-                    // image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
-                    frame_buf[y * g_height + x] = p.color;
+                    frame_buf[y * g_width + x] = p.color;
                 }
             }
         }
@@ -194,7 +191,9 @@ int main(int argc, char **argv)
 
     for (int y = 0; y < g_height; y++) {
         for (int x = 0; x < g_width; x++) {
-            Color color = frame_buf[y * g_height + x];
+            printf("x: %d y: %d index: %d\n", x, y, y * g_width + x);
+
+            Color color = frame_buf[y * g_width + x];
             image->setPixel(x, y, color.r, color.g, color.b);
         }
     }
