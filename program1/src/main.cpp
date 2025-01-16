@@ -18,16 +18,11 @@
 using namespace std;
 
 int g_width, g_height;
-float width_scalar, width_offset, height_scalar, height_offset; 
-
 
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices);
 void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
                     const std::vector<Vertex>& vertices, std::vector<Face>& faces);
-
-int w2px(float x);
-int w2py(float y);
 
 
 /*
@@ -143,89 +138,68 @@ int main(int argc, char **argv)
     std::vector<Face> faces;
     mesh2vertices(posBuf, vertices);
     mesh2triangles(triBuf.size() / 3, triBuf, vertices, faces);
-
+    // * at this point in world space
+    
     // ! make sure i get the correct number of prims out
     assert(vertices.size() == posBuf.size() / 3);
     assert(faces.size() == triBuf.size() / 3);
 
-    // convert from world space to pixel space
-    
     // calc view volume
     ViewVolume vvolume;
     vvolume.calc_vvolume(g_width, g_height);
-    // vvolume.print();
+    vvolume.print();
 
-    width_scalar = (g_width - 1) / (vvolume.right - vvolume.left);
-    width_offset = -vvolume.left * width_scalar;
-    height_scalar = (g_height - 1) / (vvolume.top - vvolume.bottom);
-    height_offset = -vvolume.bottom * height_scalar;
+    PixelTransform pmatrix(g_width, g_height, vvolume);
+    pmatrix.print();
 
-    std::vector<PixelTriangle> pixels;
-    // calc pixel position
-    // ? could just be all indices?
-    for (auto f : faces) {
-        Pixel pixel_vert[3];
-        pixel_vert[0] = Pixel(w2px(f.v0.x), w2py(f.v0.y), f.v0.z, Color());
-        pixel_vert[1] = Pixel(w2px(f.v1.x), w2py(f.v1.y), f.v1.z, Color());
-        pixel_vert[2] = Pixel(w2px(f.v2.x), w2py(f.v2.y), f.v2.z, Color());
+    std::vector<Color> frame_buf(g_width * g_height, Color());
+    // std::vector<uint8_t> z_buffer(g_width * g_height);
 
-        pixels.push_back(PixelTriangle(pixel_vert[0], pixel_vert[1], 
-                                        pixel_vert[2]));
-    }
+    int ind;
 
-    // bbox.calc_box(pixels);
-    // bbox.print();
-    for (PixelTriangle pt : pixels) {
+    for (Face f : faces) {
+        f.print();
+        PixelFace pf = PixelFace(f, pmatrix);
+        pf.print();
+        
         BoundingBox bbox;
-        bbox.calc_box(pt.pixels);
+        bbox.calc_box(pf.pixels);
 
-        for (int y = bbox.x_min; y <= bbox.x_max; ++y) {
+        bbox.print();
+
+        for (int y = bbox.y_min; y <= bbox.y_max; ++y) {
 		    for (int x = bbox.x_min; x <= bbox.x_max; ++x) {
 			    Pixel p = Pixel(x, y, 0, Color());
-
-			    BaryCoord bary = p.calc_bary_coords(pt.pixels[0], pt.pixels[1], 
-												pt.pixels[2]);
-
-			if (bary.in_triangle()) {
-				p.color.r = bary.alpha * pt.pixels[0].color.r + 
-							bary.beta * pt.pixels[1].color.r +
-							bary.gamma * pt.pixels[2].color.r;
-
-				p.color.g = bary.alpha * pt.pixels[0].color.g + 
-							bary.beta * pt.pixels[1].color.g +
-							bary.gamma * pt.pixels[2].color.g;
-
-				p.color.b = bary.alpha * pt.pixels[0].color.b + 
-							bary.beta * pt.pixels[1].color.b +
-							bary.gamma * pt.pixels[2].color.b;
-				image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
-			} else {
-				image->setPixel(x, y, 255, 255, 255);
-			}
-		}
-	}
+                BaryCoord bary = p.calc_bary_coords(pf.pixels[0], pf.pixels[1], 
+												pf.pixels[2]);
+			    if (bary.in_triangle()) {
+                	p.color.r = bary.alpha * pf.pixels[0].color.r + 
+			    				bary.beta * pf.pixels[1].color.r +
+			    				bary.gamma * pf.pixels[2].color.r;
+			    	p.color.g = bary.alpha * pf.pixels[0].color.g + 
+			    				bary.beta * pf.pixels[1].color.g +
+			    				bary.gamma * pf.pixels[2].color.g;
+			    	p.color.b = bary.alpha * pf.pixels[0].color.b + 
+			    				bary.beta * pf.pixels[1].color.b +
+			    				bary.gamma * pf.pixels[2].color.b;
+                    // printf("x: %d y: %d index: %d\n", x, y, y * g_height + x);
+                    // p.color.print();
+                    // image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
+                    frame_buf[y * g_height + x] = p.color;
+                }
+            }
+        }
 
     }
 
-
-	
-
-
-
-    /**
-     * Knowns: triangles already in world space
-     * need to convert to pixel space
-     * 
-     * this should print every triangle (will be overlapping)
-     * for each triangle
-     *      for each pixel in triangle
-     *          compute bounding box
-     *          if pixel in triangle 
-     *              print pixel
-     */
-
+    for (int y = 0; y < g_height; y++) {
+        for (int x = 0; x < g_width; x++) {
+            Color color = frame_buf[y * g_height + x];
+            image->setPixel(x, y, color.r, color.g, color.b);
+        }
+    }
     //write out the image
-   image->writeToFile(imgName);
+    image->writeToFile(imgName);
 
     return 0;
 }
@@ -237,7 +211,7 @@ void mesh2vertices(const std::vector<float>& positions,
     
     for (size_t i = 0; i < positions.size(); i += 3) {
         vertices.push_back(Vertex(positions[i], positions[i + 1], 
-                            positions[i + 2], Color()));
+                            positions[i + 2], Color(255, 0, 0)));
     }
 
     return;
@@ -259,12 +233,4 @@ void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indi
     }
 
     return;
-}
-
-int w2px(float x) {
-    return width_scalar * x + width_offset;
-}
-
-int w2py(float y) {
-    return height_scalar * y + height_offset;
 }
