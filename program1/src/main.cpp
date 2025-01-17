@@ -205,8 +205,8 @@ void mesh2vertices(const std::vector<float>& positions,
     std::array<Color, 3> colors = {Color(255, 0, 0), Color(0, 255, 0), 
 									Color(0, 0, 255)};
     for (size_t i = 0; i < positions.size(); i += 3) {
-        Color c = colors[(rand() * rand()) % 3];
-        // Color c = Color(0xff, 0x33, 0x77);
+        // Color c = colors[(rand() * rand()) % 3];
+        Color c = Color(0xff, 0x33, 0x77);
         // Color c = Color(rand(), rand(), rand());
         vertices.push_back(Vertex(positions[i], positions[i + 1], 
                             positions[i + 2], c));
@@ -240,27 +240,27 @@ Color calc_color(BaryCoord bary, std::array<Pixel, 3>& pixels, int z) {
     b = 0;
 
     // triangle is average of 3 verts
-    for (int i = 0; i < 3; i++) {
-        r += pixels[i].color.r;
-        g += pixels[i].color.g;
-        b += pixels[i].color.b;
-    }
-    r /= 3.0f;
-    g /= 3.0f;
-    b /= 3.0f;
+    // for (int i = 0; i < 3; i++) {
+    //     r += pixels[i].color.r;
+    //     g += pixels[i].color.g;
+    //     b += pixels[i].color.b;
+    // }
+    // r /= 3.0f;
+    // g /= 3.0f;
+    // b /= 3.0f;
 
     // color blending
-    // r = bary.alpha * pixels[0].color.r + bary.beta * pixels[1].color.r +
-                // bary.gamma * pixels[2].color.r;
-    // g = bary.alpha * pixels[0].color.g + bary.beta * pixels[1].color.g +
-                // bary.gamma * pixels[2].color.g;
-    // b = bary.alpha * pixels[0].color.b + bary.beta * pixels[1].color.b +
-                // bary.gamma * pixels[2].color.b;
+    r = bary.alpha * pixels[0].color.r + bary.beta * pixels[1].color.r +
+                bary.gamma * pixels[2].color.r;
+    g = bary.alpha * pixels[0].color.g + bary.beta * pixels[1].color.g +
+                bary.gamma * pixels[2].color.g;
+    b = bary.alpha * pixels[0].color.b + bary.beta * pixels[1].color.b +
+                bary.gamma * pixels[2].color.b;
     
     // depth coloring
-    // r *= static_cast<float>(z) / 255;
-    // b *= static_cast<float>(z) / 255;
-    // g *= static_cast<float>(z) / 255;
+    r *= static_cast<float>(z) / 255;
+    b *= static_cast<float>(z) / 255;
+    g *= static_cast<float>(z) / 255;
     
     return Color(r, g, b);
 }
