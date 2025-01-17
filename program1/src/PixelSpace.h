@@ -70,8 +70,8 @@ public:
     int i;
     int j;
 
-    int dot(const PixelVector &vec);
-    int cross(const PixelVector &vec);
+    int dot(const PixelVector& vec);
+    int cross(const PixelVector& vec);
 };
 
 class PixelTransform {
@@ -90,11 +90,11 @@ class BoundingBox {
 public:
     BoundingBox() : x_min(INT_MAX), x_max(INT_MIN),
                     y_min(INT_MAX), y_max(INT_MIN) {}
-    BoundingBox(const std::array<Pixel, 3> &triangles);
+    BoundingBox(const std::array<Pixel, 3>& triangles);
     int x_min, x_max, y_min, y_max;
 
     // void calc_box(const std::vector<PixelTriangle>& vertices);
-    void calc_box(const std::array<Pixel, 3> &triangles);
+    void calc_box(const std::array<Pixel, 3>& triangles);
 
     void print()
     {

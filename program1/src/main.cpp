@@ -18,8 +18,7 @@
 // You should never do this in a header file.
 using namespace std;
 
-int g_width, g_height;
-
+bool parse_args(int argc, char** argv, int& width, int& height, int& color_mode);
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices);
 void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indices,
@@ -95,25 +94,20 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
 }
 
 
-int main(int argc, char **argv)
-{
-    if(argc < 3) {
-      cout << "Usage: raster meshfile imagefile" << endl;
-      return 0;
+int main(int argc, char **argv) {
+    int width, height, color_mode;
+
+    if (!parse_args(argc, argv, width, height, color_mode)) {
+        return 1;
     }
+
     // OBJ filename
     string meshName(argv[1]);
     string imgName(argv[2]);
 
-    // TODO: take in screen size 
-    //set g_width and g_height appropriately!
-    g_width = 720;
-    // g_width = 1720;
-    g_height = 480;
-
     //create an image
     // TODO: what is a shared pointer
-    auto image = make_shared<Image>(g_width, g_height);
+    auto image = make_shared<Image>(width, height);
 
     // triangle buffer
     vector<unsigned int> triBuf;
@@ -146,15 +140,16 @@ int main(int argc, char **argv)
     
     // get viewvolume of the world
     ViewVolume vvolume;
-    vvolume.calc_vvolume(g_width, g_height);
+    vvolume.calc_vvolume(width, height);
 
     // calc the transformation matrix to project to pixel space
-    PixelTransform pmatrix(g_width, g_height, vvolume);
+    PixelTransform pmatrix(width, height, vvolume);
 
     // alloc z buf
-    std::vector<uint8_t> z_buffer(g_width * g_height);
+    std::vector<uint8_t> z_buffer(width * height);
 
     for (Face f : faces) {
+        // project x, y onto pixel space
         PixelFace pf = PixelFace(f, pmatrix); 
 
         BoundingBox bbox;
@@ -170,8 +165,8 @@ int main(int argc, char **argv)
                 } 
 
                 int z = calc_z(bary, pf.pixels);
-                if (z_buffer[y * g_width + x] < z) {
-                    z_buffer[y * g_width + x] = z;
+                if (z_buffer[y * width + x] < z) {
+                    z_buffer[y * width + x] = z;
                     p.color = calc_color(bary, pf.pixels, z);
                     image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
                 }
@@ -186,26 +181,24 @@ int main(int argc, char **argv)
     return 0;
 }
 
-/*
-                if (z_buffer[y * g_width + x] < z) {
-                    
-                    if (is_center(bary)) {
-                        int radius = 2;
-                        for (int row = y - radius; row <= y + radius; row++) {
-                            for (int col = x - radius; col <= x + radius; col++) {
-                                image->setPixel(col, row, 255, 255, 255);
-                                z_buffer[row * g_width + col] = z;
-                            }
-                        }
+#define MIN_ARGS    (6)
+bool parse_args(int argc, char** argv, int& width, int& height, int& color_mode) {
+    if (argc < MIN_ARGS) {
+        cout << "Usage: raster <objfile> <outfile> <width> <height> <color_mode> " << endl;
+        return false;
+    }
 
-                    } else {
-                        z_buffer[y * g_width + x] = z;
-                        p.color = calc_color(bary, pf.pixels, z);
-                        image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
-                    }
-                }
-*/
+    width = std::atoi(argv[3]);
+    height = std::atoi(argv[4]);
+    if (width <= 0 || height <= 0) {
+        cout << "width and height should be positive" << endl;
+        return false;
+    }
 
+    color_mode = std::atoi(argv[5]);
+
+    return true;
+}
 
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices) {
