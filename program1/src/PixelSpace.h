@@ -27,18 +27,19 @@ public:
 
 class Pixel {
 public:
-    Pixel() : x(0), y(0), z(0), color(Color()) {}
-    Pixel(int x, int y, int z, Color color) : x(x), y(y), z(z), color(color) {}
+    Pixel() : x(0), y(0), z(0.0f), color(Color()) {}
+    Pixel(int x, int y, float z, Color color) : x(x), y(y), z(z), color(color) {}
     Pixel(Vertex v, PixelTransform pmatrix);
 
-    int x, y, z;
+    int x, y;
+    float z;
     Color color;
 
     PixelVector get_vector(const Pixel &vertex) const;
     BaryCoord calc_bary_coords(const Pixel &A, const Pixel &B,
                                const Pixel &C);
     void print() {
-        printf("Pixel(%d, %d, %d)\n", x, y, z);
+        printf("Pixel(%d, %d, %f)\n", x, y, z);
         color.print();
     }
 };

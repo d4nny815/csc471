@@ -21,7 +21,7 @@ bool BaryCoord::in_triangle() {
 Pixel::Pixel(Vertex v, PixelTransform pmatrix) {
     x = pmatrix.width_scalar * v.x + pmatrix.width_offset;
     y = pmatrix.height_scalar * v.y + pmatrix.height_offset;
-    z = static_cast<int>(v.z);
+    z = v.z;
     color = v.color;
 }
 
