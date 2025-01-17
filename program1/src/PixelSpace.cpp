@@ -13,6 +13,13 @@ bool BaryCoord::in_triangle() {
            std::abs(1.0f - alpha - beta - gamma) < TOLERANCE;
 }
 
+bool BaryCoord::is_center() {
+    const float CENTER_VAL = 1.0f / 3.0f;
+    return (std::abs(alpha - CENTER_VAL) < TOLERANCE &&
+            std::abs(beta - CENTER_VAL) < TOLERANCE &&
+            std::abs(gamma - CENTER_VAL) < TOLERANCE);
+}
+
 
 // =============================================================================
 // Pixel
@@ -29,10 +36,13 @@ PixelVector Pixel::get_vector(const Pixel& vertex) const {
     return PixelVector(vertex.x - x, vertex.y - y);
 }
 
-BaryCoord Pixel::calc_bary_coords(const Pixel& a, const Pixel& b, 
-									const Pixel& c) {
-
+BaryCoord Pixel::calc_bary_coords(const std::array<Pixel, 3>& pixels) {
     BaryCoord bary;
+
+    Pixel a = pixels[0];
+    Pixel b = pixels[1];
+    Pixel c = pixels[2];
+
     int area_abc = a.get_vector(b).cross(a.get_vector(c));
     int area_a = this->get_vector(b).cross(this->get_vector(c));
     int area_b = this->get_vector(c).cross(this->get_vector(a));

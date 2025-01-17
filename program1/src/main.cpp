@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <assert.h>
+#include <tgmath.h>
 
 #include "tiny_obj_loader.h"
 #include "Image.h"
@@ -137,25 +138,24 @@ int main(int argc, char **argv)
     cout << "Number of vertices: " << posBuf.size()/3 << endl;
     cout << "Number of triangles: " << triBuf.size()/3 << endl;
     
+    // get faces in world space
     std::vector<Vertex> vertices;
     std::vector<Face> faces;
     mesh2vertices(posBuf, vertices);
     mesh2triangles(triBuf.size() / 3, triBuf, vertices, faces);
-    // * at this point in world space
     
-    // calc view volume
+    // get viewvolume of the world
     ViewVolume vvolume;
     vvolume.calc_vvolume(g_width, g_height);
-    // vvolume.print();
 
+    // calc the transformation matrix to project to pixel space
     PixelTransform pmatrix(g_width, g_height, vvolume);
-    // pmatrix.print();
 
-    std::vector<Color> frame_buf(g_width * g_height, Color());
+    // alloc z buf
     std::vector<uint8_t> z_buffer(g_width * g_height);
 
     for (Face f : faces) {
-        PixelFace pf = PixelFace(f, pmatrix);
+        PixelFace pf = PixelFace(f, pmatrix); 
 
         BoundingBox bbox;
         bbox.calc_box(pf.pixels);
@@ -163,30 +163,17 @@ int main(int argc, char **argv)
         for (int y = bbox.y_min; y <= bbox.y_max; ++y) {
 		    for (int x = bbox.x_min; x <= bbox.x_max; ++x) {
 			    Pixel p = Pixel(x, y, 0, Color());
-                BaryCoord bary = p.calc_bary_coords(pf.pixels[0], pf.pixels[1], 
-												pf.pixels[2]);
-			    if (!bary.in_triangle()) {
+                BaryCoord bary = p.calc_bary_coords(pf.pixels);
+			    
+                if (!bary.in_triangle()) {
                     continue;    
-                }
-
-                // const float EPSILON = 1e-6; 
-                // const float MID = 1.0f / 3.0f;
-                // if ((std::abs(bary.alpha - MID) < EPSILON &&
-                //     std::abs(bary.beta - MID) < EPSILON &&
-                //     std::abs(bary.gamma - MID) < EPSILON)) {
-                //     for (int row = y - 4; row < y + 4; row++) {
-                //         for (int col = x - 4; col < x + 4; col++) {
-                //             image->setPixel(col, row, 255, 255, 255);
-                //         }
-                //     }
-                    
-                // }   
+                } 
 
                 int z = calc_z(bary, pf.pixels);
                 if (z_buffer[y * g_width + x] < z) {
+                    z_buffer[y * g_width + x] = z;
                     p.color = calc_color(bary, pf.pixels, z);
                     image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
-                    z_buffer[y * g_width + x] = z;
                 }
             }
         }
@@ -199,6 +186,26 @@ int main(int argc, char **argv)
     return 0;
 }
 
+/*
+                if (z_buffer[y * g_width + x] < z) {
+                    
+                    if (is_center(bary)) {
+                        int radius = 2;
+                        for (int row = y - radius; row <= y + radius; row++) {
+                            for (int col = x - radius; col <= x + radius; col++) {
+                                image->setPixel(col, row, 255, 255, 255);
+                                z_buffer[row * g_width + col] = z;
+                            }
+                        }
+
+                    } else {
+                        z_buffer[y * g_width + x] = z;
+                        p.color = calc_color(bary, pf.pixels, z);
+                        image->setPixel(x, y, p.color.r, p.color.g, p.color.b);
+                    }
+                }
+*/
+
 
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices) {
@@ -206,11 +213,10 @@ void mesh2vertices(const std::vector<float>& positions,
 									Color(0, 0, 255)};
     for (size_t i = 0; i < positions.size(); i += 3) {
         Color c = colors[(rand() * rand()) % 3];
+        // Color c = Color(0xff, 0x33, 0x77);
+        // Color c = Color(rand(), rand(), rand());
         vertices.push_back(Vertex(positions[i], positions[i + 1], 
-                            positions[i + 2], Color(255, 0, 0)));
-                            // positions[i + 2], Color(0xff, 0x33, 0x77)));
-                            // positions[i + 2], Color(rand(), rand(), rand())));
-                            // positions[i + 2], c));
+                            positions[i + 2], c));
     }
 
     return;
@@ -235,16 +241,35 @@ void mesh2triangles(const int n_triangles, const std::vector<unsigned int>& indi
 }
 
 Color calc_color(BaryCoord bary, std::array<Pixel, 3>& pixels, int z) {
-    Color color;
-    color.r = bary.alpha * pixels[0].color.r + bary.beta * pixels[1].color.r +
-                bary.gamma * pixels[2].color.r;
-    color.r *= static_cast<float>(z) / 255;
-    color.g = bary.alpha * pixels[0].color.g + bary.beta * pixels[1].color.g +
-                bary.gamma * pixels[2].color.g;
-    color.b = bary.alpha * pixels[0].color.b + bary.beta * pixels[1].color.b +
-                bary.gamma * pixels[2].color.b;
+    uint16_t r, g, b;
+    r = 0;
+    g = 0;
+    b = 0;
+
+    // triangle is average of 3 verts
+    for (int i = 0; i < 3; i++) {
+        r += pixels[i].color.r;
+        g += pixels[i].color.g;
+        b += pixels[i].color.b;
+    }
+    r /= 3.0f;
+    g /= 3.0f;
+    b /= 3.0f;
+
+    // color blending
+    // r = bary.alpha * pixels[0].color.r + bary.beta * pixels[1].color.r +
+                // bary.gamma * pixels[2].color.r;
+    // g = bary.alpha * pixels[0].color.g + bary.beta * pixels[1].color.g +
+                // bary.gamma * pixels[2].color.g;
+    // b = bary.alpha * pixels[0].color.b + bary.beta * pixels[1].color.b +
+                // bary.gamma * pixels[2].color.b;
     
-    return color;
+    // depth coloring
+    // r *= static_cast<float>(z) / 255;
+    // b *= static_cast<float>(z) / 255;
+    // g *= static_cast<float>(z) / 255;
+    
+    return Color(r, g, b);
 }
 
 int calc_z(BaryCoord bary, std::array<Pixel, 3>& pixels) {

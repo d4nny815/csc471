@@ -19,6 +19,7 @@ public:
     float alpha, beta, gamma;
 
     bool in_triangle();
+    bool is_center();
     void print()
     {
         printf("Bary (%f, %f, %f)\n", alpha, beta, gamma);
@@ -36,8 +37,7 @@ public:
     Color color;
 
     PixelVector get_vector(const Pixel &vertex) const;
-    BaryCoord calc_bary_coords(const Pixel &A, const Pixel &B,
-                               const Pixel &C);
+    BaryCoord calc_bary_coords(const std::array<Pixel, 3>& pixels);
     void print() {
         printf("Pixel(%d, %d, %f)\n", x, y, z);
         color.print();
