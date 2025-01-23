@@ -196,14 +196,18 @@ bool parse_args(int argc, char** argv, int& width, int& height, int& color_mode)
     }
 
     color_mode = std::atoi(argv[5]);
+    if (color_mode != 1) {
+        cout << "Only color mode 1 is implemented" << endl;
+        return false;
+    }
 
     return true;
 }
 
 void mesh2vertices(const std::vector<float>& positions, 
                     std::vector<Vertex>& vertices) {
-    std::array<Color, 3> colors = {Color(255, 0, 0), Color(0, 255, 0), 
-									Color(0, 0, 255)};
+    // std::array<Color, 3> colors = {Color(255, 0, 0), Color(0, 255, 0), 
+									// Color(0, 0, 255)};
     for (size_t i = 0; i < positions.size(); i += 3) {
         // Color c = colors[(rand() * rand()) % 3];
         Color c = Color(0xff, 0x33, 0x77);
