@@ -8,5 +8,5 @@ out vec3 fragCol;
 void main()
 {
 	gl_Position = P * V * M * vec4(vertPos, 1.0);
-	fragCol = vec3(0.1, 0.3, 0.1);
+	fragCol = vec3(0.1, 0.1, .8);
 }
