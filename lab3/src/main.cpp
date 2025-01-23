@@ -40,6 +40,32 @@ static const GLfloat g_vertex_buffer_data[] = {
     0.0f,  .9f, 0.0f,
 };
 
+static const GLfloat g_color_buffer_data[] = {
+    1.0f,  0.0f,  0.0f,
+    0.0f,  1.0f,  0.0f,
+    0.0f,  0.0f,  1.0f,
+
+    1.0f,  0.0f,  0.0f,
+    0.0f,  1.0f,  0.0f,
+    0.0f,  0.0f,  1.0f,
+
+    1.0f,  0.0f,  0.0f,
+    0.0f,  1.0f,  0.0f,
+    0.0f,  0.0f,  1.0f,
+
+    // 0.302f,  0.112f,  0.23f,
+    // 0.609f,  0.115f,  0.436f,
+    // 0.327f,  0.483f,  0.844f,
+    // 
+    // 0.822f,  0.569f,  0.201f,
+    // 0.435f,  0.602f,  0.223f,
+    // 0.310f,  0.747f,  0.185f,
+    // 
+    // 0.597f,  0.770f,  0.761f,
+    // 0.559f,  0.436f,  0.730f,
+    // 0.359f,  0.583f,  0.152f,
+};
+
 /* A big global wrapper for all our data */
 class Application : public EventCallbacks {
 
@@ -58,6 +84,10 @@ public:
 
     // Data necessary to give our triangle to OpenGL
     GLuint vertexBufferID;
+    
+    // Color Data for the triangles
+    GLuint colorArrayID;
+    GLuint colorBufferID;
 
     /* we will work with matrices soon - don't worry - place holder for now */
     void createIdentityMat(float *M) {
@@ -134,6 +164,13 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
         //actually memcopy the data - only do this once
         glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
+
+        glGenVertexArrays(1, &colorArrayID);
+        glBindVertexArray(colorArrayID);
+        
+        glGenBuffers(1, &colorBufferID);
+        glBindBuffer(GL_ARRAY_BUFFER, colorBufferID);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
     }
 
     void render()
@@ -170,6 +207,12 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
         //key function to get up how many elements to pull out at a time (3)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+        // setup color buffer
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, colorBufferID);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 
         //actually draw from vertex 0, 3 vertices
         glDrawArrays(GL_TRIANGLES, 0, 9);
