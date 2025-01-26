@@ -138,17 +138,13 @@ public:
 	void multMat(float *C, const float *A, const float *B)
 	{
 		float c = 0;
-		for(int k = 0; k < 4; ++k) {
-      // Process kth column of C
-			for(int i = 0; i < 4; ++i) {
-         // Process ith row of C.
-         // The (i,k)th element of C is the dot product
-         // of the ith row of A and kth col of B.
+		for(int row = 0; row < 4; ++row) {
+			for(int col = 0; col < 4; ++col) {
 				c = 0;
-         //vector dot
-				for(int j = 0; j < 4; ++j) {
-            // IMPLEMENT ME
+				for(int k = 0; k < 4; ++k) {
+					c += A[get_mat_ind(row, k)] * B[get_mat_ind(k, col)];
 				}
+			C[get_mat_ind(row, col)] = c;
 			}
 		}
 	}
@@ -271,13 +267,21 @@ public:
 		//Use the local matrices for lab 4
 		float aspect = width/(float)height;
 		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
-		createIdentityMat(M);
+		// createIdentityMat(M);
 		// createIdentityMat(V);
-		createTranslateMat(V, 0, 0, -6);
-		createRotateMatX(M, 0.5);
-		// createRotateMatY(M, 0.5);
-		// createRotateMatZ(M, 0.5);
+		createTranslateMat(V, 0, 0, -10);
 
+		float scale[16] = {0}; 
+		float rotatex[16] = {0}; 
+		float rotatey[16] = {0};
+		float tmp[16] = {0};
+
+		createScaleMat(scale, 1, 1, 1);
+		createRotateMatX(rotatex, .3);
+		multMat(tmp, scale, rotatex);
+		createRotateMatY(rotatey, .3);
+		multMat(M, tmp, rotatey);
+		
 		// Draw mesh using GLSL.
 		prog->bind();
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, P);
