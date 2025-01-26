@@ -266,8 +266,7 @@ public:
 
 		//Use the local matrices for lab 4
 		float aspect = width/(float)height;
-		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
-		createTranslateMat(V, 0, 0, -10);
+		
 
 		float translate[16] = {0}; 
 		float scale[16] = {0}; 
@@ -279,37 +278,43 @@ public:
 
 		#define PI (3.14)
 		// Draw mesh using GLSL.
+		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
+		createTranslateMat(translate, 0, 0, -12);
+		createRotateMatY(rotatey, -(PI / 6));
+		multMat(V, translate, rotatey);
+		// createTranslateMat(V, 0, 0, -10);
+
 		prog->bind();
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, P);
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, V);
 
 		createTranslateMat(translate, -3, 0, 0);
-		createRotateMatY(rotatey, -(PI / 3));
-		multMat(tmp, translate, rotatey);
-		createScaleMat(scale, 1, 8, 1);
-		multMat(M, tmp, scale);
-		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
-		mesh->draw(prog);
-
-		createTranslateMat(translate, 0, -.5, .5);
-		createRotateMatY(rotatey, PI / 12);
+		createRotateMatY(rotatey, PI / 24);
 		multMat(tmp, translate, rotatey);
 		createScaleMat(scale, 1, 6, 1);
 		multMat(M, tmp, scale);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
 		mesh->draw(prog);
 
-		createTranslateMat(translate, -1.3, .3, 1);
-		createRotateMatX(rotatex, PI / 6);
-		multMat(tmp, translate, rotatex);
+		createTranslateMat(translate, 0, 0, .4);
+		createRotateMatY(rotatey, -(PI / 36));
+		multMat(tmp, translate, rotatey);
+		createScaleMat(scale, 1, 7, 1);
+		multMat(M, tmp, scale);
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
+		mesh->draw(prog);
+
+		createTranslateMat(translate, -1.3, .3, 0);
+		createRotateMatZ(rotatez, -(PI / 8));
+		multMat(tmp, translate, rotatez);
 		createScaleMat(scale, 4.5, 1, 1);
 		multMat(M, tmp, scale);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
 		mesh->draw(prog);
 
 		createTranslateMat(translate, 3, 0, -2);
-		createRotateMatZ(rotatez, -(PI / 24));
-		multMat(tmp, translate, rotatez);
+		createRotateMatX(rotatex, -(PI / 24));
+		multMat(tmp, translate, rotatex);
 		createScaleMat(scale, .3, 5, 1);
 		multMat(M, tmp, scale);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
