@@ -68,6 +68,10 @@ public:
 		printf("\n");
 	}
 
+	inline int get_mat_ind(int row, int col) {
+		return row + 4 * col;
+	}
+
 	void createIdentityMat(float *M)
 	{
 	//set all values to zero
@@ -82,28 +86,53 @@ public:
 
 	void createTranslateMat(float *T, float x, float y, float z)
 	{
-   // IMPLEMENT ME
+		createIdentityMat(T);
+		// memset(T, 0, sizeof(float) * 16);
+		T[get_mat_ind(0, 3)] = x;
+		T[get_mat_ind(1, 3)] = y;
+		T[get_mat_ind(2, 3)] = z;
 	}
 
 
 	void createScaleMat(float *S, float x, float y, float z)
 	{
-   // IMPLEMENT ME
+		createIdentityMat(S);
+		S[get_mat_ind(0, 0)] = x;
+		S[get_mat_ind(1, 1)] = y;
+		S[get_mat_ind(2, 2)] = z;
 	}
 
 	void createRotateMatX(float *R, float radians)
 	{ 
-   // IMPLEMENT ME
+		memset(R, 0, sizeof(float) * 16);
+		R[get_mat_ind(0, 0)] = 1; 
+		R[get_mat_ind(1, 1)] = cos(radians); 
+		R[get_mat_ind(1, 2)] = -sin(radians); 
+		R[get_mat_ind(2, 1)] = sin(radians); 
+		R[get_mat_ind(2, 2)] = cos(radians); 
+		R[get_mat_ind(3, 3)] = 1; 
 	}
 
 	void createRotateMatY(float *R, float radians)
 	{
-   // IMPLEMENT ME
+		memset(R, 0, sizeof(float) * 16);
+		R[get_mat_ind(1, 1)] = 1; 
+		R[get_mat_ind(0, 0)] = cos(radians); 
+		R[get_mat_ind(0, 2)] = sin(radians); 
+		R[get_mat_ind(2, 0)] = -sin(radians); 
+		R[get_mat_ind(2, 2)] = cos(radians); 
+		R[get_mat_ind(3, 3)] = 1; 
 	}
 
 	void createRotateMatZ(float *R, float radians)
 	{
-   // IMPLEMENT ME
+		memset(R, 0, sizeof(float) * 16);
+		R[get_mat_ind(2, 2)] = 1; 
+		R[get_mat_ind(0, 0)] = cos(radians); 
+		R[get_mat_ind(0, 1)] = -sin(radians); 
+		R[get_mat_ind(1, 0)] = sin(radians); 
+		R[get_mat_ind(1, 1)] = cos(radians); 
+		R[get_mat_ind(3, 3)] = 1; 
 	}
 
 	void multMat(float *C, const float *A, const float *B)
@@ -243,7 +272,11 @@ public:
 		float aspect = width/(float)height;
 		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
 		createIdentityMat(M);
-		createIdentityMat(V);
+		// createIdentityMat(V);
+		createTranslateMat(V, 0, 0, -6);
+		createRotateMatX(M, 0.5);
+		// createRotateMatY(M, 0.5);
+		// createRotateMatZ(M, 0.5);
 
 		// Draw mesh using GLSL.
 		prog->bind();
