@@ -267,27 +267,54 @@ public:
 		//Use the local matrices for lab 4
 		float aspect = width/(float)height;
 		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
-		// createIdentityMat(M);
-		// createIdentityMat(V);
 		createTranslateMat(V, 0, 0, -10);
 
+		float translate[16] = {0}; 
 		float scale[16] = {0}; 
 		float rotatex[16] = {0}; 
 		float rotatey[16] = {0};
+		float rotatez[16] = {0};
 		float tmp[16] = {0};
 
-		createScaleMat(scale, 1, 1, 1);
-		createRotateMatX(rotatex, .3);
-		multMat(tmp, scale, rotatex);
-		createRotateMatY(rotatey, .3);
-		multMat(M, tmp, rotatey);
-		
+
+		#define PI (3.14)
 		// Draw mesh using GLSL.
 		prog->bind();
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, P);
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, V);
+
+		createTranslateMat(translate, -3, 0, 0);
+		createRotateMatY(rotatey, -(PI / 3));
+		multMat(tmp, translate, rotatey);
+		createScaleMat(scale, 1, 8, 1);
+		multMat(M, tmp, scale);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
 		mesh->draw(prog);
+
+		createTranslateMat(translate, 0, -.5, .5);
+		createRotateMatY(rotatey, PI / 12);
+		multMat(tmp, translate, rotatey);
+		createScaleMat(scale, 1, 6, 1);
+		multMat(M, tmp, scale);
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
+		mesh->draw(prog);
+
+		createTranslateMat(translate, -1.3, .3, 1);
+		createRotateMatX(rotatex, PI / 6);
+		multMat(tmp, translate, rotatex);
+		createScaleMat(scale, 4.5, 1, 1);
+		multMat(M, tmp, scale);
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
+		mesh->draw(prog);
+
+		createTranslateMat(translate, 3, 0, -2);
+		createRotateMatZ(rotatez, -(PI / 24));
+		multMat(tmp, translate, rotatez);
+		createScaleMat(scale, .3, 5, 1);
+		multMat(M, tmp, scale);
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, M);
+		mesh->draw(prog);
+
 		prog->unbind();
 
 	}
