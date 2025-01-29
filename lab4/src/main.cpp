@@ -68,19 +68,15 @@ public:
 		printf("\n");
 	}
 
-	inline int get_mat_ind(int row, int col) {
+	constexpr int get_mat_ind(int row, int col) {
 		return row + 4 * col;
 	}
 
 	void createIdentityMat(float *M)
 	{
-	//set all values to zero
-		for(int i = 0; i < 4; ++i) {
-			for(int j = 0; j < 4; ++j) {
-				M[i*4+j] = 0;
-			}
-		}
-	//overwrite diagonal with 1s
+		memset(M, 0, sizeof(float) * 16);
+
+		//overwrite diagonal with 1s
 		M[0] = M[5] = M[10] = M[15] = 1;
 	}
 
@@ -104,7 +100,7 @@ public:
 
 	void createRotateMatX(float *R, float radians)
 	{ 
-		memset(R, 0, sizeof(float) * 16);
+		memset(R, 0.0f, sizeof(float) * 16);
 		R[get_mat_ind(0, 0)] = 1; 
 		R[get_mat_ind(1, 1)] = cos(radians); 
 		R[get_mat_ind(1, 2)] = -sin(radians); 
@@ -282,7 +278,7 @@ public:
 		createTranslateMat(translate, 0, 0, -12);
 		createRotateMatY(rotatey, -(PI / 6));
 		multMat(V, translate, rotatey);
-		// createTranslateMat(V, 0, 0, -10);
+		createTranslateMat(V, 0, 0, -10);
 
 		prog->bind();
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, P);
@@ -290,6 +286,7 @@ public:
 
 		createTranslateMat(translate, -3, 0, 0);
 		createRotateMatY(rotatey, PI / 24);
+		// createRotateMatY(rotatey, PI / 4);
 		multMat(tmp, translate, rotatey);
 		createScaleMat(scale, 1, 6, 1);
 		multMat(M, tmp, scale);
