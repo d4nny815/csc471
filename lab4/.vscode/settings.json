@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.ld": "mapfile",
+        "cmath": "cpp"
+    }
+}

@@ -275,10 +275,10 @@ public:
 		#define PI (3.14)
 		// Draw mesh using GLSL.
 		createPerspectiveMat(P, 70.0f, aspect, 0.1, 100.0f);	
-		createTranslateMat(translate, 0, 0, -12);
-		createRotateMatY(rotatey, -(PI / 6));
+		createTranslateMat(translate, 0, 0, -20);
+		createRotateMatY(rotatey, -(PI / 2));
 		multMat(V, translate, rotatey);
-		createTranslateMat(V, 0, 0, -10);
+		// createTranslateMat(V, 0, 0, -10);
 
 		prog->bind();
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, P);
