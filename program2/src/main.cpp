@@ -121,6 +121,7 @@ public:
 	void initGeom(const std::string& resourceDirectory)
 	{
 
+		// TODO: convert to read multiple objs
 		//EXAMPLE set up to read one shape from one obj file - convert to read several
 		// Initialize mesh
 		// Load geometry
@@ -143,7 +144,7 @@ public:
 
 		//load in another mesh and make the shape(s)
 		vector<tinyobj::shape_t> TOshapes2;
- 		rc = tinyobj::LoadObj(TOshapes2, objMaterials, errStr, (resourceDirectory + "/bunny.obj").c_str());
+ 		rc = tinyobj::LoadObj(TOshapes2, objMaterials, errStr, (resourceDirectory + "/FinalBaseMesh.obj").c_str());
 		
 		if (!rc) {
 			cerr << errStr << endl;
@@ -155,6 +156,7 @@ public:
 			bunny->init();
 		}
 
+		// ? what to do with these?
 		//read out information stored in the shape about its size - something like this...
 		//then do something with that information.....
 		gMin.x = mesh->min.x;
@@ -164,8 +166,9 @@ public:
 	/* helper for sending top of the matrix strack to GPU */
 	void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M) {
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
-   }
+	}
 
+	// TODO: add rotateZ
 	/* helper function to set model trasnforms */
   	void setModel(shared_ptr<Program> curS, vec3 trans, float rotY, float rotX, float sc) {
   		mat4 Trans = glm::translate( glm::mat4(1.0f), trans);
@@ -199,86 +202,101 @@ public:
 
 		// View is global translation along negative z for now
 		View->pushMatrix();
-			View->loadIdentity();
-			View->translate(vec3(0, 0, -5));
+		View->loadIdentity();
+		View->translate(vec3(0, 0, -5));
 
 		// Draw a solid colored sphere
-		solidColorProg->bind();
-		//send the projetion and view for solid shader
-		glUniformMatrix4fv(solidColorProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-		glUniformMatrix4fv(solidColorProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
-		//send in the color to use
-		glUniform3f(solidColorProg->getUniform("solidColor"), 0.1, 0.2, 0.5);
+		// solidColorProg->bind();
+		// //send the projetion and view for solid shader
+		// glUniformMatrix4fv(solidColorProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		// glUniformMatrix4fv(solidColorProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+		// //send in the color to use
+		// glUniform3f(solidColorProg->getUniform("solidColor"), 0.1, 0.2, 0.5);
 
-		//use helper function that uses glm to create some transform matrices
-		setModel(prog, vec3(-1.7, -1.7, 0), 0, 0, 0.5);
-		mesh->draw(prog);
+		// //use helper function that uses glm to create some transform matrices
+		// setModel(prog, vec3(1, -1.7, 1.5), 0, 0, 0.1);
+		// mesh->draw(prog);
+		// bunny->draw(prog);
 
-		solidColorProg->unbind();
+		// solidColorProg->unbind();
 
-		// Draw base Hierarchical person
 		prog->bind();
+		//send the projetion and view for solid shader
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 
 		//use helper function that uses glm to create some transform matrices
-		setModel(prog, vec3(1.7, -1.7, 0), 0, 0, 0.5);
+		setModel(prog, vec3(1, -1.7, 1.5), 0, 0, 0.1);
+		mesh->draw(prog);
 		bunny->draw(prog);
-
-
-		// draw hierarchical mesh using matrix stack
-		Model->pushMatrix();
-			Model->loadIdentity();
-			Model->translate(vec3(gTrans, 0, 0));
-			/* draw top cube - aka head */
-			Model->pushMatrix();
-				Model->translate(vec3(0, 1.4, 0));
-				Model->scale(vec3(0.5, 0.5, 0.5));
-				setModel(prog, Model);
-				mesh->draw(prog);
-			Model->popMatrix();
-			//draw the torso with these transforms
-			Model->pushMatrix();
-			  Model->scale(vec3(1.25, 1.35, 1.25));
-			  setModel(prog, Model);
-			  mesh->draw(prog);
-			Model->popMatrix();
-			// draw the upper 'arm' - relative 
-			//note you must change this to include 3 components!
-			Model->pushMatrix();
-			  //place at shoulder
-			  Model->translate(vec3(0.8, 0.8, 0));
-			  //rotate shoulder joint
-			  Model->rotate(sTheta, vec3(0, 0, 1));
-			  //move to shoulder joint
-			  Model->translate(vec3(0.8, 0, 0));
-	
-			    //now draw lower arm - this is INCOMPLETE and you will add a 3rd component
-			  	//right now this is in the SAME place as the upper arm
-			  	Model->pushMatrix();
-			      Model->scale(vec3(0.8, 0.25, 0.25));
-			  	  setModel(prog, Model);
-			  	  mesh->draw(prog);
-			  	Model->popMatrix();
-
-			  //Do final scale ONLY to upper arm then draw
-			  //non-uniform scale
-			  Model->scale(vec3(0.8, 0.25, 0.25));
-			  setModel(prog, Model);
-			  mesh->draw(prog);
-			Model->popMatrix();
-		
-		Model->popMatrix();
 
 		prog->unbind();
 
-		//animation update example
-		sTheta = sin(glfwGetTime());
+		// // Draw base Hierarchical person
+		// prog->bind();
+		// glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		// glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+
+		// //use helper function that uses glm to create some transform matrices
+		// // setModel(prog, vec3(1.7, -1.7, 0), 0, 0, 0.5);
+		// // bunny->draw(prog);
+
+
+		// // draw hierarchical mesh using matrix stack
+		// Model->pushMatrix();
+		// Model->loadIdentity();
+		// Model->translate(vec3(gTrans, 0, 0));
+		
+		// /* draw top cube - aka head */
+		// Model->pushMatrix();
+		// Model->translate(vec3(0, 1.4, 0));
+		// Model->scale(vec3(0.5, 0.5, 0.5));
+		// setModel(prog, Model);
+		// mesh->draw(prog);
+		// Model->popMatrix();
+		
+		// //draw the torso with these transforms
+		// Model->pushMatrix();
+		// Model->scale(vec3(1.25, 1.35, 1.25));
+		// setModel(prog, Model);
+		// mesh->draw(prog);
+		// Model->popMatrix();
+		
+		// // draw the upper 'arm' - relative 
+		// //note you must change this to include 3 components!
+		// Model->pushMatrix();
+		// //place at shoulder
+		// Model->translate(vec3(0.8, 0.8, 0));
+		// //rotate shoulder joint
+		// Model->rotate(sTheta, vec3(0, 0, 1));
+		// //move to shoulder joint
+		// Model->translate(vec3(0.8, 0, 0));
+	
+		// //now draw lower arm - this is INCOMPLETE and you will add a 3rd component
+		// //right now this is in the SAME place as the upper arm
+		// Model->pushMatrix();
+		// Model->scale(vec3(0.8, 0.25, 0.25));
+		// setModel(prog, Model);
+		// mesh->draw(prog);
+		// Model->popMatrix();
+
+		// //Do final scale ONLY to upper arm then draw
+		// //non-uniform scale
+		// Model->scale(vec3(0.8, 0.25, 0.25));
+		// setModel(prog, Model);
+		// mesh->draw(prog);
+		// Model->popMatrix();
+		
+		// Model->popMatrix();
+
+		// prog->unbind();
+
+		// //animation update example
+		// sTheta = sin(glfwGetTime());
 
 		// Pop matrix stacks.
 		Projection->popMatrix();
 		View->popMatrix();
-
 	}
 };
 
