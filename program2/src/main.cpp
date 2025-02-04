@@ -38,7 +38,7 @@ public:
     
     //a different mesh
     vector<shared_ptr<Shape>> charizard;
-    shared_ptr<Shape> gojo;
+    vector<shared_ptr<Shape>> gojo;
     shared_ptr<Shape> wolf;
     shared_ptr<Shape> dog;
     shared_ptr<Shape> tree;
@@ -106,17 +106,6 @@ public:
         prog->addAttribute("vertPos");
         prog->addAttribute("vertNor");
 
-        // // Initialize the GLSL program.
-        // solidColorProg = make_shared<Program>();
-        // solidColorProg->setVerbose(true);
-        // solidColorProg->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/solid_frag.glsl");
-        // solidColorProg->init();
-        // solidColorProg->addUniform("P");
-        // solidColorProg->addUniform("V");
-        // solidColorProg->addUniform("M");
-        // solidColorProg->addUniform("solidColor");
-        // solidColorProg->addAttribute("vertPos");
-        // solidColorProg->addAttribute("vertNor");
     }
 
     void initGeom(const std::string& resourceDirectory)
@@ -129,14 +118,13 @@ public:
         // Load geometry
          // Some obj files contain material information.We'll ignore them for this assignment.
 
-        // TODO: ask joel
-        vector<tinyobj::shape_t> TOshapes0;
-         rc = tinyobj::LoadObj(TOshapes0, objMaterials, errStr, (resourceDirectory + "/BR_Charizard.obj").c_str());
+        vector<tinyobj::shape_t> shapes_char;
+         rc = tinyobj::LoadObj(shapes_char, objMaterials, errStr, (resourceDirectory + "/char2.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
             //for now all our shapes will not have textures - change in later labs
-            for (auto shape: TOshapes0) {
+            for (auto shape: shapes_char) {
                 auto s = make_shared<Shape>(false);
                 s->createShape(shape);
                 s->measure();
@@ -145,51 +133,55 @@ public:
             }
         }
 
-         vector<tinyobj::shape_t> TOshapes1; 		
-         rc = tinyobj::LoadObj(TOshapes1, objMaterials, errStr, (resourceDirectory + "/dog.obj").c_str());
+         vector<tinyobj::shape_t> shape_dog; 		
+         rc = tinyobj::LoadObj(shape_dog, objMaterials, errStr, (resourceDirectory + "/dog.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
             dog = make_shared<Shape>(false);
-            dog->createShape(TOshapes1[0]);
+            dog->createShape(shape_dog[0]);
             dog->measure();
             dog->init();
         }
 
-        vector<tinyobj::shape_t> TOshapes2;
-         rc = tinyobj::LoadObj(TOshapes2, objMaterials, errStr, (resourceDirectory + "/Wolf_One_obj.obj").c_str());
+        vector<tinyobj::shape_t> shape_wolf;
+         rc = tinyobj::LoadObj(shape_wolf, objMaterials, errStr, (resourceDirectory + "/Wolf_One_obj.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
             //for now all our shapes will not have textures - change in later labs
             wolf = make_shared<Shape>(false);
-            wolf->createShape(TOshapes2[0]);
+            wolf->createShape(shape_wolf[0]);
             wolf->measure();
             wolf->init();
         }
         
 
         // TODO: also multishape
-        vector<tinyobj::shape_t> TOshapes3;
-         rc = tinyobj::LoadObj(TOshapes3, objMaterials, errStr, (resourceDirectory + "/gojo.obj").c_str());
+        vector<tinyobj::shape_t> shapes_gojo;
+         rc = tinyobj::LoadObj(shapes_gojo, objMaterials, errStr, (resourceDirectory + "/gojo.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
             //for now all our shapes will not have textures - change in later labs
-            gojo = make_shared<Shape>(false);
-            gojo->createShape(TOshapes3[0]);
-            gojo->measure();
-            gojo->init();
+            // FIXME: maybe push first?
+            for (auto shape: shapes_gojo) {
+                auto s = make_shared<Shape>(false);
+                s->createShape(shape);
+                s->measure();
+                s->init();
+                gojo.push_back(s);
+            }
         }
 
-        vector<tinyobj::shape_t> TOshapesTree;
-         rc = tinyobj::LoadObj(TOshapesTree, objMaterials, errStr, (resourceDirectory + "/tree.obj").c_str());
+        vector<tinyobj::shape_t> shapes_tree;
+         rc = tinyobj::LoadObj(shapes_tree, objMaterials, errStr, (resourceDirectory + "/tree.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
             //for now all our shapes will not have textures - change in later labs
             tree = make_shared<Shape>(false);
-            tree->createShape(TOshapesTree[0]);
+            tree->createShape(shapes_tree[0]);
             tree->measure();
             tree->init();
         }
@@ -199,6 +191,12 @@ public:
         //then do something with that information.....
         // gMin.x = mesh->min.x;
         // gMin.y = mesh->min.y;
+    }
+
+    void draw_multi(shared_ptr<Program> prog, vector<shared_ptr<Shape>> object) {
+        for (auto shape : object) {
+            shape->draw(prog);
+        }
     }
 
     /* helper for sending top of the matrix strack to GPU */
@@ -249,6 +247,20 @@ public:
 
         Model->pushMatrix();
         Model->loadIdentity();
+
+        // draw my king
+        Model->pushMatrix();
+        Model->scale(10);
+        setModel(prog, Model);
+        draw_multi(prog, gojo);
+        
+        Model->scale(.05);
+        setModel(prog, Model);
+
+        draw_multi(prog, charizard);
+        
+        Model->popMatrix();
+
         
         // Draw Trees
         Model->pushMatrix();
@@ -259,7 +271,7 @@ public:
         for (int i = 0; i < 4; i++) {
             Model->pushMatrix();
             Model->translate(vec3(-13, 0, 0));
-            Model->rotate(3.14 / 4, vec3(0, 1, 0));
+            Model->rotate(M_PI_4, vec3(0, 1, 0));
             Model->translate(vec3(13, 0, 0));
             setModel(prog, Model);
             tree->draw(prog);
@@ -271,51 +283,43 @@ public:
         }
 
         // setup for wolf, dog, and slot machine
+        // slot (dog rn) is the ref point
         Model->pushMatrix();
-        Model->translate(vec3(-8, -7, 0));
-        Model->scale(.8);
-        Model->rotate(-5 * 3.14 / 8, vec3(0, 1, 0));
+        Model->translate(vec3(-15, -2, 3));
+        Model->scale(.3);
+        setModel(prog, Model);
+        dog->draw(prog);
         
         // finish dog
         Model->pushMatrix();
-        Model->rotate(-3.14 / 12, vec3(1, 0, 0));
+        Model->rotate(5 * M_PI / 4, vec3(0, 1, 0));
+        Model->translate(vec3(0, 0, -15));
+        Model->rotate(-M_PI / 12, vec3(1, 0, 0));
         setModel(prog, Model);
         dog->draw(prog);
         Model->popMatrix();
 
         // finish wolf
-        Model->translate(vec3(0, 0, 5));
-        Model->rotate(-3.14 / 2, vec3(0, 1, 0));
-        Model->translate(vec3(0, 0, -10));
-        Model->rotate(-3.14 / 12, vec3(1, 0, 0));
+        Model->pushMatrix();
+        Model->rotate(3 * M_PI / 4, vec3(0, 1, 0));
+        Model->translate(vec3(0, -3, -10));
+        Model->rotate(-M_PI / 12, vec3(1, 0, 0));
         Model->scale(10);
         setModel(prog, Model);
         wolf->draw(prog);
+        Model->popMatrix();
+
         
         // pop dog and wolf
         Model->popMatrix();
 
 
         // draw gojo and charizard
-        Model->pushMatrix();
-
-        Model->scale(5);
-        setModel(prog, Model);
-        gojo->draw(prog);
-        Model->popMatrix();
 
 
         // main pop
         Model->popMatrix();
 
-        // Draw charizard
-
-
-        // Draw gojo
-
-        // Draw
-
-        
 
         //use helper function that uses glm to create some transform matrices
         // setModel(prog, vec3(-1, .5, 0), 0, -3.14/8, .2);
