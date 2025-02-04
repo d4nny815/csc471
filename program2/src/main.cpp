@@ -56,10 +56,10 @@ public:
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-			gTrans -= 0.2;
+			gTrans += 0.2;
 		}
 		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-			gTrans += 0.2;
+			gTrans -= 0.2;
 		}
 		if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -167,6 +167,7 @@ public:
 			wolf->init();
 		}
 
+		// TODO: also multishape
 		vector<tinyobj::shape_t> TOshapes3;
  		rc = tinyobj::LoadObj(TOshapes3, objMaterials, errStr, (resourceDirectory + "/gojo.obj").c_str());
 		if (!rc) {
@@ -226,7 +227,20 @@ public:
 		// View is global translation along negative z for now
 		View->pushMatrix();
 		View->loadIdentity();
-		View->translate(vec3(0, 0, -5));
+		View->translate(vec3(gTrans, 0, -10));
+
+		// Draw dog
+
+
+		// Draw wolf
+
+
+		// Draw charizard
+
+
+		// Draw gojo
+
+		// Draw
 
 		// Draw a solid colored sphere
 		// solidColorProg->bind();
@@ -260,7 +274,6 @@ public:
 		Model->pushMatrix();
 		Model->translate(vec3(.5, 0, 3));
 		Model->scale(vec3(0.5, 0.5, 0.5));
-		// Model->rotate(3.14/4, vec3(0, 1, 0));
 		Model->rotate(sTheta, vec3(0, 1, 0));
 		setModel(prog, Model);
 		wolf->draw(prog);
