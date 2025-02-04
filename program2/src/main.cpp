@@ -34,13 +34,13 @@ public:
 	std::shared_ptr<Program> prog;
 
 	// Our shader program
-	std::shared_ptr<Program> solidColorProg;
-
-	// Shape to be used (from  file) - modify to support multiple
-	shared_ptr<Shape> mesh;
-
+	// std::shared_ptr<Program> solidColorProg;
+	
 	//a different mesh
-	shared_ptr<Shape> bunny;
+	vector<shared_ptr<Shape>> charizard;
+	shared_ptr<Shape> wolf;
+	shared_ptr<Shape> dog;
+	shared_ptr<Shape> gojo;
 
 	//example data that might be useful when trying to compute bounds on multi-shape
 	vec3 gMin;
@@ -105,62 +105,85 @@ public:
 		prog->addAttribute("vertPos");
 		prog->addAttribute("vertNor");
 
-		// Initialize the GLSL program.
-		solidColorProg = make_shared<Program>();
-		solidColorProg->setVerbose(true);
-		solidColorProg->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/solid_frag.glsl");
-		solidColorProg->init();
-		solidColorProg->addUniform("P");
-		solidColorProg->addUniform("V");
-		solidColorProg->addUniform("M");
-		solidColorProg->addUniform("solidColor");
-		solidColorProg->addAttribute("vertPos");
-		solidColorProg->addAttribute("vertNor");
+		// // Initialize the GLSL program.
+		// solidColorProg = make_shared<Program>();
+		// solidColorProg->setVerbose(true);
+		// solidColorProg->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/solid_frag.glsl");
+		// solidColorProg->init();
+		// solidColorProg->addUniform("P");
+		// solidColorProg->addUniform("V");
+		// solidColorProg->addUniform("M");
+		// solidColorProg->addUniform("solidColor");
+		// solidColorProg->addAttribute("vertPos");
+		// solidColorProg->addAttribute("vertNor");
 	}
 
 	void initGeom(const std::string& resourceDirectory)
 	{
-
-		// TODO: convert to read multiple objs
+		vector<tinyobj::material_t> objMaterials;
+ 		string errStr;
+		bool rc;
 		//EXAMPLE set up to read one shape from one obj file - convert to read several
 		// Initialize mesh
 		// Load geometry
  		// Some obj files contain material information.We'll ignore them for this assignment.
- 		vector<tinyobj::shape_t> TOshapes;
- 		vector<tinyobj::material_t> objMaterials;
- 		string errStr;
-		//load in the mesh and make the shape(s)
- 		bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, (resourceDirectory + "/SmoothSphere.obj").c_str());
-		
+
+		// TODO: ask joel
+		vector<tinyobj::shape_t> TOshapes0;
+ 		rc = tinyobj::LoadObj(TOshapes0, objMaterials, errStr, (resourceDirectory + "/BR_Charizard.obj").c_str());
 		if (!rc) {
 			cerr << errStr << endl;
 		} else {
 			//for now all our shapes will not have textures - change in later labs
-			mesh = make_shared<Shape>(false);
-			mesh->createShape(TOshapes[0]);
-			mesh->measure();
-			mesh->init();
+			for (auto shape: TOshapes0) {
+				auto s = make_shared<Shape>(false);
+				s->createShape(shape);
+				s->measure();
+				s->init();
+				charizard.push_back(s);
+			}
 		}
 
-		//load in another mesh and make the shape(s)
+ 		vector<tinyobj::shape_t> TOshapes1; 		
+ 		rc = tinyobj::LoadObj(TOshapes1, objMaterials, errStr, (resourceDirectory + "/dog.obj").c_str());
+		if (!rc) {
+			cerr << errStr << endl;
+		} else {
+			dog = make_shared<Shape>(false);
+			dog->createShape(TOshapes1[0]);
+			dog->measure();
+			dog->init();
+		}
+
 		vector<tinyobj::shape_t> TOshapes2;
- 		rc = tinyobj::LoadObj(TOshapes2, objMaterials, errStr, (resourceDirectory + "/FinalBaseMesh.obj").c_str());
-		
+ 		rc = tinyobj::LoadObj(TOshapes2, objMaterials, errStr, (resourceDirectory + "/Wolf_One_obj.obj").c_str());
 		if (!rc) {
 			cerr << errStr << endl;
 		} else {
 			//for now all our shapes will not have textures - change in later labs
-			bunny = make_shared<Shape>(false);
-			bunny->createShape(TOshapes2[0]);
-			bunny->measure();
-			bunny->init();
+			wolf = make_shared<Shape>(false);
+			wolf->createShape(TOshapes2[0]);
+			wolf->measure();
+			wolf->init();
+		}
+
+		vector<tinyobj::shape_t> TOshapes3;
+ 		rc = tinyobj::LoadObj(TOshapes3, objMaterials, errStr, (resourceDirectory + "/gojo.obj").c_str());
+		if (!rc) {
+			cerr << errStr << endl;
+		} else {
+			//for now all our shapes will not have textures - change in later labs
+			wolf = make_shared<Shape>(false);
+			wolf->createShape(TOshapes3[0]);
+			wolf->measure();
+			wolf->init();
 		}
 
 		// ? what to do with these?
 		//read out information stored in the shape about its size - something like this...
 		//then do something with that information.....
-		gMin.x = mesh->min.x;
-		gMin.y = mesh->min.y;
+		// gMin.x = mesh->min.x;
+		// gMin.y = mesh->min.y;
 	}
 
 	/* helper for sending top of the matrix strack to GPU */
@@ -226,9 +249,22 @@ public:
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 
 		//use helper function that uses glm to create some transform matrices
-		setModel(prog, vec3(1, -1.7, 1.5), 0, 0, 0.1);
-		mesh->draw(prog);
-		bunny->draw(prog);
+		setModel(prog, vec3(-1, .5, 0), 0, -3.14/8, .2);
+		dog->draw(prog);
+
+		Model->pushMatrix();
+		Model->loadIdentity();
+		setModel(prog, Model);
+		wolf->draw(prog);
+
+		Model->pushMatrix();
+		Model->translate(vec3(.5, 0, 3));
+		Model->scale(vec3(0.5, 0.5, 0.5));
+		// Model->rotate(3.14/4, vec3(0, 1, 0));
+		Model->rotate(sTheta, vec3(0, 1, 0));
+		setModel(prog, Model);
+		wolf->draw(prog);
+		Model->popMatrix();
 
 		prog->unbind();
 
@@ -292,7 +328,7 @@ public:
 		// prog->unbind();
 
 		// //animation update example
-		// sTheta = sin(glfwGetTime());
+		sTheta = sin(glfwGetTime());
 
 		// Pop matrix stacks.
 		Projection->popMatrix();
