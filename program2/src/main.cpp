@@ -21,6 +21,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define X_AXIS          (vec3(1, 0, 0))
+#define Y_AXIS          (vec3(0, 1, 0))
+#define Z_AXIS          (vec3(0, 0, 1))
+
 using namespace std;
 using namespace glm;
 
@@ -33,22 +37,22 @@ public:
     // Our shader program
     std::shared_ptr<Program> prog;
 
-    // Our shader program
-    // std::shared_ptr<Program> solidColorProg;
-    
     //a different mesh
     vector<shared_ptr<Shape>> charizard;
     vector<shared_ptr<Shape>> gojo;
+    vector<shared_ptr<Shape>> tree;
+    vector<shared_ptr<Shape>> slot_machine;
     shared_ptr<Shape> wolf;
     shared_ptr<Shape> dog;
-    shared_ptr<Shape> tree;
 
     //example data that might be useful when trying to compute bounds on multi-shape
     vec3 gMin;
 
     //animation data
-    float sTheta = 0;
     float gTrans = 0;
+
+    float char_y;
+    float gojo_y;
 
     void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
@@ -123,7 +127,6 @@ public:
         if (!rc) {
             cerr << errStr << endl;
         } else {
-            //for now all our shapes will not have textures - change in later labs
             for (auto shape: shapes_char) {
                 auto s = make_shared<Shape>(false);
                 s->createShape(shape);
@@ -149,7 +152,6 @@ public:
         if (!rc) {
             cerr << errStr << endl;
         } else {
-            //for now all our shapes will not have textures - change in later labs
             wolf = make_shared<Shape>(false);
             wolf->createShape(shape_wolf[0]);
             wolf->measure();
@@ -157,14 +159,11 @@ public:
         }
         
 
-        // TODO: also multishape
         vector<tinyobj::shape_t> shapes_gojo;
          rc = tinyobj::LoadObj(shapes_gojo, objMaterials, errStr, (resourceDirectory + "/gojo.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
-            //for now all our shapes will not have textures - change in later labs
-            // FIXME: maybe push first?
             for (auto shape: shapes_gojo) {
                 auto s = make_shared<Shape>(false);
                 s->createShape(shape);
@@ -175,22 +174,32 @@ public:
         }
 
         vector<tinyobj::shape_t> shapes_tree;
-         rc = tinyobj::LoadObj(shapes_tree, objMaterials, errStr, (resourceDirectory + "/tree.obj").c_str());
+        rc = tinyobj::LoadObj(shapes_tree, objMaterials, errStr, (resourceDirectory + "/tree.obj").c_str());
         if (!rc) {
             cerr << errStr << endl;
         } else {
-            //for now all our shapes will not have textures - change in later labs
-            tree = make_shared<Shape>(false);
-            tree->createShape(shapes_tree[0]);
-            tree->measure();
-            tree->init();
+            for (auto shape: shapes_tree) {
+                auto s = make_shared<Shape>(false);
+                s->createShape(shape);
+                s->measure();
+                s->init();
+                tree.push_back(s);
+            }
         }
 
-        // ? what to do with these?
-        //read out information stored in the shape about its size - something like this...
-        //then do something with that information.....
-        // gMin.x = mesh->min.x;
-        // gMin.y = mesh->min.y;
+        vector<tinyobj::shape_t> shapes_slot;
+        rc = tinyobj::LoadObj(shapes_slot, objMaterials, errStr, (resourceDirectory + "/slot_machine.obj").c_str());
+        if (!rc) {
+            cerr << errStr << endl;
+        } else {
+            for (auto shape: shapes_slot) {
+                auto s = make_shared<Shape>(false);
+                s->createShape(shape);
+                s->measure();
+                s->init();
+                slot_machine.push_back(s);
+            }
+        }
     }
 
     void draw_multi(shared_ptr<Program> prog, vector<shared_ptr<Shape>> object) {
@@ -204,9 +213,8 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
     }
 
-    // TODO: add rotateZ
     /* helper function to set model trasnforms */
-      void setModel(shared_ptr<Program> curS, vec3 trans, float rotY, float rotX, float sc) {
+    void setModel(shared_ptr<Program> curS, vec3 trans, float rotY, float rotX, float sc) {
           mat4 Trans = glm::translate( glm::mat4(1.0f), trans);
           mat4 RotX = glm::rotate( glm::mat4(1.0f), rotX, vec3(1, 0, 0));
           mat4 RotY = glm::rotate( glm::mat4(1.0f), rotY, vec3(0, 1, 0));
@@ -245,52 +253,79 @@ public:
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 
+        // Reference origin
         Model->pushMatrix();
         Model->loadIdentity();
 
+
         // draw my king
         Model->pushMatrix();
-        Model->scale(10);
+        Model->rotate(M_PI_2, Y_AXIS);
+        Model->translate(vec3(0, gojo_y, -5));
+        Model->scale(5);
         setModel(prog, Model);
         draw_multi(prog, gojo);
-        
-        Model->scale(.05);
-        setModel(prog, Model);
+        Model->popMatrix();
 
-        draw_multi(prog, charizard);
+        // draw charizard
+        Model->pushMatrix();
+        Model->rotate(-M_PI_2, Y_AXIS);
+        Model->translate(vec3(0, char_y, -7));
+        Model->scale(.5);
+        setModel(prog, Model);
+        charizard[0]->draw(prog);
+
+        Model->pushMatrix();
+        Model->rotate(char_y / 4, Z_AXIS);
+        setModel(prog, Model);
+        charizard[1]->draw(prog);
+        Model->popMatrix();
         
+        Model->pushMatrix();
+        Model->rotate(-char_y / 4, Z_AXIS);
+        setModel(prog, Model);
+        charizard[2]->draw(prog);
+        Model->popMatrix();
+
+        //draw_multi(prog, charizard);
         Model->popMatrix();
 
         
         // Draw Trees
         Model->pushMatrix();
-        Model->translate(vec3(13, 0, 0));
+        const float TREE_DIST = 19;
+        Model->translate(vec3(TREE_DIST, 0, 0));
         setModel(prog, Model);
-        tree->draw(prog);
+        draw_multi(prog, tree);
         
         for (int i = 0; i < 4; i++) {
             Model->pushMatrix();
-            Model->translate(vec3(-13, 0, 0));
+            Model->translate(vec3(-TREE_DIST, 0, 0));
             Model->rotate(M_PI_4, vec3(0, 1, 0));
-            Model->translate(vec3(13, 0, 0));
+            Model->translate(vec3(TREE_DIST, 0, 0));
             setModel(prog, Model);
-            tree->draw(prog);
+            draw_multi(prog, tree);
         }
 
-        // pop trees
         for (int i = 0; i < 5; i++) {
             Model->popMatrix();
         }
 
         // setup for wolf, dog, and slot machine
-        // slot (dog rn) is the ref point
+        // slot is the ref point
         Model->pushMatrix();
-        Model->translate(vec3(-15, -2, 3));
+        Model->translate(vec3(-10, 0, 8));
         Model->scale(.3);
-        setModel(prog, Model);
-        dog->draw(prog);
         
-        // finish dog
+        // draw slot machine
+        Model->pushMatrix();
+        Model->scale(.2);
+        Model->rotate(-M_PI_2, vec3(1, 0, 0));
+        setModel(prog, Model);
+        draw_multi(prog, slot_machine);
+        Model->popMatrix();
+
+        // draw dog
         Model->pushMatrix();
         Model->rotate(5 * M_PI / 4, vec3(0, 1, 0));
         Model->translate(vec3(0, 0, -15));
@@ -299,7 +334,7 @@ public:
         dog->draw(prog);
         Model->popMatrix();
 
-        // finish wolf
+        // draw wolf
         Model->pushMatrix();
         Model->rotate(3 * M_PI / 4, vec3(0, 1, 0));
         Model->translate(vec3(0, -3, -10));
@@ -309,98 +344,17 @@ public:
         wolf->draw(prog);
         Model->popMatrix();
 
-        
-        // pop dog and wolf
+        // pop slot ref
         Model->popMatrix();
-
-
-        // draw gojo and charizard
 
 
         // main pop
         Model->popMatrix();
-
-
-        //use helper function that uses glm to create some transform matrices
-        // setModel(prog, vec3(-1, .5, 0), 0, -3.14/8, .2);
-        // dog->draw(prog);
-
-        // Model->pushMatrix();
-        // Model->loadIdentity();
-        // setModel(prog, Model);
-        // wolf->draw(prog);
-
-        // Model->pushMatrix();
-        // Model->translate(vec3(.5, 0, 3));
-        // Model->scale(vec3(0.5, 0.5, 0.5));
-        // Model->rotate(sTheta, vec3(0, 1, 0));
-        // setModel(prog, Model);
-        // wolf->draw(prog);
-        // Model->popMatrix();
-
         prog->unbind();
 
-        // // Draw base Hierarchical person
-        // prog->bind();
-        // glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-        // glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
-
-        // //use helper function that uses glm to create some transform matrices
-        // // setModel(prog, vec3(1.7, -1.7, 0), 0, 0, 0.5);
-        // // bunny->draw(prog);
-
-
-        // // draw hierarchical mesh using matrix stack
-        // Model->pushMatrix();
-        // Model->loadIdentity();
-        // Model->translate(vec3(gTrans, 0, 0));
-        
-        // /* draw top cube - aka head */
-        // Model->pushMatrix();
-        // Model->translate(vec3(0, 1.4, 0));
-        // Model->scale(vec3(0.5, 0.5, 0.5));
-        // setModel(prog, Model);
-        // mesh->draw(prog);
-        // Model->popMatrix();
-        
-        // //draw the torso with these transforms
-        // Model->pushMatrix();
-        // Model->scale(vec3(1.25, 1.35, 1.25));
-        // setModel(prog, Model);
-        // mesh->draw(prog);
-        // Model->popMatrix();
-        
-        // // draw the upper 'arm' - relative 
-        // //note you must change this to include 3 components!
-        // Model->pushMatrix();
-        // //place at shoulder
-        // Model->translate(vec3(0.8, 0.8, 0));
-        // //rotate shoulder joint
-        // Model->rotate(sTheta, vec3(0, 0, 1));
-        // //move to shoulder joint
-        // Model->translate(vec3(0.8, 0, 0));
-    
-        // //now draw lower arm - this is INCOMPLETE and you will add a 3rd component
-        // //right now this is in the SAME place as the upper arm
-        // Model->pushMatrix();
-        // Model->scale(vec3(0.8, 0.25, 0.25));
-        // setModel(prog, Model);
-        // mesh->draw(prog);
-        // Model->popMatrix();
-
-        // //Do final scale ONLY to upper arm then draw
-        // //non-uniform scale
-        // Model->scale(vec3(0.8, 0.25, 0.25));
-        // setModel(prog, Model);
-        // mesh->draw(prog);
-        // Model->popMatrix();
-        
-        // Model->popMatrix();
-
-        // prog->unbind();
-
         //animation update example
-        sTheta = sin(glfwGetTime());
+        char_y = sin(glfwGetTime()) / 4;
+        gojo_y = cos(glfwGetTime());
 
         // Pop matrix stacks.
         Projection->popMatrix();
