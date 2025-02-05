@@ -245,9 +245,12 @@ public:
         Projection->perspective(45.0f, aspect, 0.01f, 100.0f);
 
         // View is global translation along negative z for now
+        const float CAM_Z = -50;
+        const float CAM_Y = -10;
         View->pushMatrix();
         View->loadIdentity();
-        View->translate(vec3(gTrans, -8, -30));
+        View->translate(vec3(0, CAM_Y, CAM_Z));
+        View->rotate(gTrans, Y_AXIS);
 
         prog->bind();
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
@@ -259,35 +262,80 @@ public:
 
 
         // draw my king
-        Model->pushMatrix();
+        Model->pushMatrix(); // gojo push
+
         Model->rotate(M_PI_2, Y_AXIS);
-        Model->translate(vec3(0, gojo_y, -5));
+        Model->translate(vec3(0, 0, -5));
         Model->scale(5);
         setModel(prog, Model);
-        draw_multi(prog, gojo);
-        Model->popMatrix();
+        for (int i = 3; i < gojo.size(); i++) {
+            gojo[i]->draw(prog);
+        }
+
+        // gojo orb
+        Model->pushMatrix(); // push fighting orb
+        gojo_y = sin(7 * glfwGetTime()) / 4 + .25;
+        Model->translate(vec3(0, 0, gojo_y));
+        setModel(prog, Model);
+        gojo[0]->draw(prog);
+        Model->popMatrix(); // pop fighting orb
+
+        
+        Model->pushMatrix(); // gojo orb push
+        Model->translate(vec3(0, -.3, 0));
+
+        float orb_speed = glfwGetTime() * 5;
+
+        Model->pushMatrix(); // push flat ring
+        Model->rotate(1.25 * orb_speed, Y_AXIS);
+        Model->translate(vec3(0, 0, .8));
+        setModel(prog, Model);
+        gojo[2]->draw(prog);
+        Model->popMatrix();  // pop flat ring
+
+        Model->translate(vec3(0, 1, .5));
+        Model->pushMatrix(); // push cool ring
+        gojo_y = glfwGetTime() * 12;
+        
+        const float orb_dist_x = 0;
+        const float orb_dist_y = 0;
+        
+        Model->translate(vec3(orb_dist_x, orb_dist_y, 0));
+        Model->rotate(sin(glfwGetTime()), X_AXIS);
+        Model->rotate(orb_speed, Y_AXIS);
+        Model->rotate(glfwGetTime(), Z_AXIS);
+        Model->translate(vec3(-orb_dist_x, -orb_dist_y, 0));
+        setModel(prog, Model);
+        gojo[2]->draw(prog);
+        Model->popMatrix(); // pop cool ring
+
+
+        Model->popMatrix();  // gojo orbs pop
+        Model->popMatrix(); // gojo pop
 
         // draw charizard
         Model->pushMatrix();
+
+        char_y = sin(glfwGetTime()) / 4;
         Model->rotate(-M_PI_2, Y_AXIS);
-        Model->translate(vec3(0, char_y, -7));
-        Model->scale(.5);
+        Model->translate(vec3(0, char_y, -8.5));
+        Model->scale(.65);
         setModel(prog, Model);
         charizard[0]->draw(prog);
 
+        char_y = sin(10 * glfwGetTime());
         Model->pushMatrix();
-        Model->rotate(char_y / 4, Z_AXIS);
+        Model->rotate(char_y / 12, Z_AXIS);
         setModel(prog, Model);
         charizard[1]->draw(prog);
         Model->popMatrix();
         
         Model->pushMatrix();
-        Model->rotate(-char_y / 4, Z_AXIS);
+        Model->rotate(-char_y / 12, Z_AXIS);
         setModel(prog, Model);
         charizard[2]->draw(prog);
         Model->popMatrix();
 
-        //draw_multi(prog, charizard);
         Model->popMatrix();
 
         
@@ -353,8 +401,6 @@ public:
         prog->unbind();
 
         //animation update example
-        char_y = sin(glfwGetTime()) / 4;
-        gojo_y = cos(glfwGetTime());
 
         // Pop matrix stacks.
         Projection->popMatrix();
