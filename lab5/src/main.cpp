@@ -51,7 +51,9 @@ public:
 
 	//animation data
 	float sTheta = 0;
-	float gTrans = 0;
+	float shoulder_angle = 0;
+	bool is_animating = false;
+	float gTrans;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -70,6 +72,9 @@ public:
 		}
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		}
+		if (key == GLFW_KEY_X  && action == GLFW_PRESS) {
+			is_animating = !is_animating;
 		}
 	}
 
@@ -200,7 +205,7 @@ public:
 		Model->pushMatrix(); // push arm
 		float arm_length = TORSO_SCALE.x;
 		Model->translate(vec3(arm_length / 2, 0.8, 0)); // move to shoulder joint (center at joint)
-		float shoulder_angle = sin(glfwGetTime()) * M_PI_4;
+		shoulder_angle = is_animating ? sin(sTheta) * M_PI_4 : shoulder_angle;
 		Model->rotate(shoulder_angle, Z_AXIS); 
 
 
@@ -213,7 +218,7 @@ public:
 
 		// draw forearm
 		Model->translate(vec3(arm_length, 0, 0)); // move to elbow joint
-		float elbow_angle = shoulder_angle > 0 ? sin(glfwGetTime()) * M_PI_2 : 0; 
+		float elbow_angle = shoulder_angle > 0 ? sin(sTheta) * M_PI_2 : 0; 
 		Model->rotate(elbow_angle, Z_AXIS); 
 		
 		Model->pushMatrix(); // push forearm
@@ -224,7 +229,7 @@ public:
 		Model->popMatrix(); // pop forearm
 
 		Model->translate(vec3(2 * arm_length / 3 , 0, 0)); // move to wrist joint
-		float wrist_angle = shoulder_angle > 0 ? sin(5 * glfwGetTime()) * sin(2 * glfwGetTime()) : 0;
+		float wrist_angle = shoulder_angle > 0 ? sin(5 * sTheta) * sin(2 * sTheta) : 0;
 		Model->rotate(wrist_angle, Z_AXIS);
 
 		Model->pushMatrix(); // push hand
@@ -276,6 +281,8 @@ public:
 		Model->popMatrix(); // main pop
 		prog->unbind();
 
+		if (is_animating) sTheta += .01;
+			
 		// Pop matrix stacks.
 		Projection->popMatrix();
 		View->popMatrix();
