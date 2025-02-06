@@ -51,6 +51,7 @@ public:
 
 	//animation data
 	float sTheta = 0;
+	float arm_theta = 0;
 	float shoulder_angle = 0;
 	bool is_animating = false;
 	float gTrans;
@@ -75,6 +76,14 @@ public:
 		}
 		if (key == GLFW_KEY_X  && action == GLFW_PRESS) {
 			is_animating = !is_animating;
+		}
+
+		if (key == GLFW_KEY_LEFT  && action == GLFW_PRESS) {
+			if (arm_theta >= 0) arm_theta -= .1;
+		}
+
+		if (key == GLFW_KEY_RIGHT  && action == GLFW_PRESS) {
+			if (arm_theta <= M_PI_2) arm_theta += .1;
 		}
 	}
 
@@ -118,7 +127,7 @@ public:
 	void initGeom(const std::string& resourceDirectory)
 	{
 
-		//EXAMPLE set up to read one shape from one obj file - convert to read several
+		// EXAMPLE set up to read one shape from one obj file - convert to read several
 		// Initialize mesh
 		// Load geometry
  		// Some obj files contain material information.We'll ignore them for this assignment.
@@ -256,7 +265,7 @@ public:
 
 		// draw forearm
 		Model->translate(vec3(-arm_length, 0, 0)); // move to elbow joint
-		Model->rotate(M_PI_2, Z_AXIS); 
+		Model->rotate(arm_theta, Z_AXIS); 
 
 		Model->pushMatrix(); // push forearm
 		Model->translate(vec3(-arm_length / 3, 0, 0));
@@ -282,7 +291,7 @@ public:
 		prog->unbind();
 
 		if (is_animating) sTheta += .01;
-			
+
 		// Pop matrix stacks.
 		Projection->popMatrix();
 		View->popMatrix();
