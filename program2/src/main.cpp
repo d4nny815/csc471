@@ -283,7 +283,7 @@ public:
         solid_shader->bind();
 		glUniformMatrix4fv(solid_shader->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
 		glUniformMatrix4fv(solid_shader->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
-		glUniform3f(solid_shader->getUniform("solidColor"), 0.1, 0.8, 0.3);
+		glUniform3f(solid_shader->getUniform("solidColor"), 0.4, 0.6, 0.3);
 
         Model->pushMatrix();
         Model->translate(vec3(0, -60, 0));

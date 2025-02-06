@@ -1,0 +1,3 @@
+/home/danny/school/csc471/lab5/build/CMakeFiles/HMlab.dir
+/home/danny/school/csc471/lab5/build/CMakeFiles/edit_cache.dir
+/home/danny/school/csc471/lab5/build/CMakeFiles/rebuild_cache.dir
