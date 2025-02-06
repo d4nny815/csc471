@@ -35,7 +35,8 @@ public:
     WindowManager * windowManager = nullptr;
 
     // Our shader program
-    std::shared_ptr<Program> prog;
+    std::shared_ptr<Program> norm_vec_shader;
+    std::shared_ptr<Program> solid_shader;
 
     //a different mesh
     vector<shared_ptr<Shape>> charizard;
@@ -44,6 +45,7 @@ public:
     vector<shared_ptr<Shape>> slot_machine;
     shared_ptr<Shape> wolf;
     shared_ptr<Shape> dog;
+    shared_ptr<Shape> cube;
 
     //example data that might be useful when trying to compute bounds on multi-shape
     vec3 gMin;
@@ -100,15 +102,26 @@ public:
         glEnable(GL_DEPTH_TEST);
 
         // Initialize the GLSL program.
-        prog = make_shared<Program>();
-        prog->setVerbose(true);
-        prog->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/simple_frag.glsl");
-        prog->init();
-        prog->addUniform("P");
-        prog->addUniform("V");
-        prog->addUniform("M");
-        prog->addAttribute("vertPos");
-        prog->addAttribute("vertNor");
+        norm_vec_shader = make_shared<Program>();
+        norm_vec_shader->setVerbose(true);
+        norm_vec_shader->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/simple_frag.glsl");
+        norm_vec_shader->init();
+        norm_vec_shader->addUniform("P");
+        norm_vec_shader->addUniform("V");
+        norm_vec_shader->addUniform("M");
+        norm_vec_shader->addAttribute("vertPos");
+        norm_vec_shader->addAttribute("vertNor");
+
+        solid_shader = make_shared<Program>();
+		solid_shader->setVerbose(true);
+		solid_shader->setShaderNames(resourceDirectory + "/simple_vert.glsl", resourceDirectory + "/solid_frag.glsl");
+		solid_shader->init();
+		solid_shader->addUniform("P");
+		solid_shader->addUniform("V");
+		solid_shader->addUniform("M");
+		solid_shader->addUniform("solidColor");
+		solid_shader->addAttribute("vertPos");
+		solid_shader->addAttribute("vertNor");
 
     }
 
@@ -200,17 +213,28 @@ public:
                 slot_machine.push_back(s);
             }
         }
+
+        vector<tinyobj::shape_t> shape_cube;
+        rc = tinyobj::LoadObj(shape_cube, objMaterials, errStr, (resourceDirectory + "/cube.obj").c_str());
+        if (!rc) {
+            cerr << errStr << endl;
+        } else {
+            cube = make_shared<Shape>(false);
+            cube->createShape(shape_cube[0]);
+            cube->measure();
+            cube->init();
+        }
     }
 
-    void draw_multi(shared_ptr<Program> prog, vector<shared_ptr<Shape>> object) {
+    void draw_multi(shared_ptr<Program> norm_vec_shader, vector<shared_ptr<Shape>> object) {
         for (auto shape : object) {
-            shape->draw(prog);
+            shape->draw(norm_vec_shader);
         }
     }
 
     /* helper for sending top of the matrix strack to GPU */
-    void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M) {
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
+    void setModel(std::shared_ptr<Program> norm_vec_shader, std::shared_ptr<MatrixStack>M) {
+        glUniformMatrix4fv(norm_vec_shader->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
     }
 
     /* helper function to set model trasnforms */
@@ -252,32 +276,45 @@ public:
         View->translate(vec3(0, CAM_Y, CAM_Z));
         View->rotate(gTrans, Y_AXIS);
 
-        prog->bind();
-        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
-
         // Reference origin
         Model->pushMatrix();
         Model->loadIdentity();
 
+        solid_shader->bind();
+		glUniformMatrix4fv(solid_shader->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		glUniformMatrix4fv(solid_shader->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+		glUniform3f(solid_shader->getUniform("solidColor"), 0.1, 0.8, 0.3);
 
+        Model->pushMatrix();
+        Model->translate(vec3(0, -60, 0));
+        Model->scale(120);
+		setModel(solid_shader, Model);
+		cube->draw(solid_shader);
+
+        Model->popMatrix();
+        solid_shader->unbind();
+
+
+        norm_vec_shader->bind();
+        glUniformMatrix4fv(norm_vec_shader->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+        glUniformMatrix4fv(norm_vec_shader->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
         // draw my king
         Model->pushMatrix(); // gojo push
 
         Model->rotate(M_PI_2, Y_AXIS);
         Model->translate(vec3(0, 0, -5));
         Model->scale(5);
-        setModel(prog, Model);
+        setModel(norm_vec_shader, Model);
         for (int i = 3; i < gojo.size(); i++) {
-            gojo[i]->draw(prog);
+            gojo[i]->draw(norm_vec_shader);
         }
 
         // gojo orb
         Model->pushMatrix(); // push fighting orb
         gojo_y = sin(7 * glfwGetTime()) / 4 + .25;
         Model->translate(vec3(0, 0, gojo_y));
-        setModel(prog, Model);
-        gojo[0]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        gojo[0]->draw(norm_vec_shader);
         Model->popMatrix(); // pop fighting orb
 
         
@@ -289,8 +326,8 @@ public:
         Model->pushMatrix(); // push flat ring
         Model->rotate(1.25 * orb_speed, Y_AXIS);
         Model->translate(vec3(0, 0, .8));
-        setModel(prog, Model);
-        gojo[2]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        gojo[2]->draw(norm_vec_shader);
         Model->popMatrix();  // pop flat ring
 
         Model->translate(vec3(0, 1, .5));
@@ -305,8 +342,8 @@ public:
         Model->rotate(orb_speed, Y_AXIS);
         Model->rotate(glfwGetTime(), Z_AXIS);
         Model->translate(vec3(-orb_dist_x, -orb_dist_y, 0));
-        setModel(prog, Model);
-        gojo[2]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        gojo[2]->draw(norm_vec_shader);
         Model->popMatrix(); // pop cool ring
 
 
@@ -320,20 +357,20 @@ public:
         Model->rotate(-M_PI_2, Y_AXIS);
         Model->translate(vec3(0, char_y, -8.5));
         Model->scale(.65);
-        setModel(prog, Model);
-        charizard[0]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        charizard[0]->draw(norm_vec_shader);
 
         char_y = sin(10 * glfwGetTime());
         Model->pushMatrix();
         Model->rotate(char_y / 12, Z_AXIS);
-        setModel(prog, Model);
-        charizard[1]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        charizard[1]->draw(norm_vec_shader);
         Model->popMatrix();
         
         Model->pushMatrix();
         Model->rotate(-char_y / 12, Z_AXIS);
-        setModel(prog, Model);
-        charizard[2]->draw(prog);
+        setModel(norm_vec_shader, Model);
+        charizard[2]->draw(norm_vec_shader);
         Model->popMatrix();
 
         Model->popMatrix();
@@ -343,16 +380,16 @@ public:
         Model->pushMatrix();
         const float TREE_DIST = 19;
         Model->translate(vec3(TREE_DIST, 0, 0));
-        setModel(prog, Model);
-        draw_multi(prog, tree);
+        setModel(norm_vec_shader, Model);
+        draw_multi(norm_vec_shader, tree);
         
         for (int i = 0; i < 4; i++) {
             Model->pushMatrix();
             Model->translate(vec3(-TREE_DIST, 0, 0));
             Model->rotate(M_PI_4, vec3(0, 1, 0));
             Model->translate(vec3(TREE_DIST, 0, 0));
-            setModel(prog, Model);
-            draw_multi(prog, tree);
+            setModel(norm_vec_shader, Model);
+            draw_multi(norm_vec_shader, tree);
         }
 
         for (int i = 0; i < 5; i++) {
@@ -362,15 +399,17 @@ public:
         // setup for wolf, dog, and slot machine
         // slot is the ref point
         Model->pushMatrix();
-        Model->translate(vec3(-10, 0, 8));
+        Model->translate(vec3(-50, 1, 30));
+        Model->rotate(M_PI_2, Y_AXIS);
         Model->scale(.3);
         
         // draw slot machine
         Model->pushMatrix();
         Model->scale(.2);
-        Model->rotate(-M_PI_2, vec3(1, 0, 0));
-        setModel(prog, Model);
-        draw_multi(prog, slot_machine);
+        Model->rotate(-M_PI_2, X_AXIS);
+        Model->translate(vec3(0, 0, -20));
+        setModel(norm_vec_shader, Model);
+        draw_multi(norm_vec_shader, slot_machine);
         Model->popMatrix();
 
         // draw dog
@@ -378,8 +417,8 @@ public:
         Model->rotate(5 * M_PI / 4, vec3(0, 1, 0));
         Model->translate(vec3(0, 0, -15));
         Model->rotate(-M_PI / 12, vec3(1, 0, 0));
-        setModel(prog, Model);
-        dog->draw(prog);
+        setModel(norm_vec_shader, Model);
+        dog->draw(norm_vec_shader);
         Model->popMatrix();
 
         // draw wolf
@@ -388,8 +427,8 @@ public:
         Model->translate(vec3(0, -3, -10));
         Model->rotate(-M_PI / 12, vec3(1, 0, 0));
         Model->scale(10);
-        setModel(prog, Model);
-        wolf->draw(prog);
+        setModel(norm_vec_shader, Model);
+        wolf->draw(norm_vec_shader);
         Model->popMatrix();
 
         // pop slot ref
@@ -398,7 +437,7 @@ public:
 
         // main pop
         Model->popMatrix();
-        prog->unbind();
+        norm_vec_shader->unbind();
 
         //animation update example
 
