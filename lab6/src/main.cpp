@@ -79,7 +79,7 @@ public:
 		if (key == GLFW_KEY_S && action == GLFW_PRESS){
 			gCamH  += 0.25;
 		}
-		if (key == GLFW_KEY_F && action == GLFW_PRESS){
+		if (key == GLFW_KEY_W && action == GLFW_PRESS){
 			gCamH  -= 0.25;
 		}
 
@@ -131,6 +131,7 @@ public:
 		prog->addUniform("V");
 		prog->addUniform("M");
 		prog->addUniform("MatAmb");
+		prog->addUniform("MatDif");
 		prog->addUniform("lightPos");
 		prog->addAttribute("vertPos");
 		prog->addAttribute("vertNor");
@@ -158,13 +159,14 @@ public:
 
 	void initGeom(const std::string& resourceDirectory)
 	{
-		//EXAMPLE set up to read one shape from one obj file - convert to read several
+		// EXAMPLE set up to read one shape from one obj file - convert to read several
 		// Initialize mesh
 		// Load geometry
  		// Some obj files contain material information.We'll ignore them for this assignment.
  		vector<tinyobj::shape_t> TOshapes;
  		vector<tinyobj::material_t> objMaterials;
  		string errStr;
+		
 		//load in the mesh and make the shape(s)
  		bool rc = tinyobj::LoadObj(TOshapes, objMaterials, errStr, (resourceDirectory + "/sphere.obj").c_str());
 		if (!rc) {
@@ -175,6 +177,7 @@ public:
 			sphere->measure();
 			sphere->init();
 		}
+		
 		//read out information stored in the shape about its size - something like this...
 		//then do something with that information.....
 		gMin.x = sphere->min.x;
@@ -258,7 +261,7 @@ public:
      	glBindVertexArray(GroundVertexArrayID);
      	texture0->bind(curS->getUniform("Texture0"));
 		//draw the ground plane 
-  		SetModel(vec3(0, -1, 0), 0, 0, 1, curS);
+  		SetModel(curS, vec3(0, -1, 0), 0, 0, 1);
   		glEnableVertexAttribArray(0);
   		glBindBuffer(GL_ARRAY_BUFFER, GrndBuffObj);
   		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -287,19 +290,19 @@ public:
     	switch (i) {
     		case 0: //
     			glUniform3f(curS->getUniform("MatAmb"), 0.096, 0.046, 0.095);
-    			//glUniform3f(curS->getUniform("MatDif"), 0.96, 0.46, 0.95);
+    			glUniform3f(curS->getUniform("MatDif"), 0.96, 0.46, 0.95);
     			//glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.23, 0.45);
     			//glUniform1f(curS->getUniform("MatShine"), 120.0);
     		break;
     		case 1: // 
     			glUniform3f(curS->getUniform("MatAmb"), 0.063, 0.038, 0.1);
-    			//glUniform3f(curS->getUniform("MatDif"), 0.63, 0.38, 1.0);
+    			glUniform3f(curS->getUniform("MatDif"), 0.63, 0.38, 1.0);
     			//glUniform3f(curS->getUniform("MatSpec"), 0.3, 0.2, 0.5);
     			//glUniform1f(curS->getUniform("MatShine"), 4.0);
     		break;
     		case 2: //
     			glUniform3f(curS->getUniform("MatAmb"), 0.004, 0.05, 0.09);
-    			//glUniform3f(curS->getUniform("MatDif"), 0.04, 0.5, 0.9);
+    			glUniform3f(curS->getUniform("MatDif"), 0.04, 0.5, 0.9);
     			//glUniform3f(curS->getUniform("MatSpec"), 0.02, 0.25, 0.45);
     			//glUniform1f(curS->getUniform("MatShine"), 27.9);
     		break;
@@ -307,7 +310,7 @@ public:
 	}
 
 	/* helper function to set model trasnforms */
-  	void SetModel(vec3 trans, float rotY, float rotX, float sc, shared_ptr<Program> curS) {
+  	void SetModel(shared_ptr<Program> curS, vec3 trans, float rotY, float rotX, float sc) {
   		mat4 Trans = glm::translate( glm::mat4(1.0f), trans);
   		mat4 RotX = glm::rotate( glm::mat4(1.0f), rotX, vec3(1, 0, 0));
   		mat4 RotY = glm::rotate( glm::mat4(1.0f), rotY, vec3(0, 1, 0));
