@@ -132,6 +132,9 @@ public:
 		prog->addUniform("M");
 		prog->addUniform("MatAmb");
 		prog->addUniform("MatDif");
+		prog->addUniform("MatSpec");
+		prog->addUniform("MatShine");
+		prog->addUniform("lightColor");
 		prog->addUniform("lightPos");
 		prog->addAttribute("vertPos");
 		prog->addAttribute("vertNor");
@@ -291,21 +294,29 @@ public:
     		case 0: //
     			glUniform3f(curS->getUniform("MatAmb"), 0.096, 0.046, 0.095);
     			glUniform3f(curS->getUniform("MatDif"), 0.96, 0.46, 0.95);
-    			//glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.23, 0.45);
-    			//glUniform1f(curS->getUniform("MatShine"), 120.0);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.23, 0.45);
+    			glUniform1f(curS->getUniform("MatShine"), 120.0);
     		break;
     		case 1: // 
     			glUniform3f(curS->getUniform("MatAmb"), 0.063, 0.038, 0.1);
     			glUniform3f(curS->getUniform("MatDif"), 0.63, 0.38, 1.0);
-    			//glUniform3f(curS->getUniform("MatSpec"), 0.3, 0.2, 0.5);
-    			//glUniform1f(curS->getUniform("MatShine"), 4.0);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.3, 0.2, 0.5);
+    			glUniform1f(curS->getUniform("MatShine"), 4.0);
     		break;
     		case 2: //
     			glUniform3f(curS->getUniform("MatAmb"), 0.004, 0.05, 0.09);
     			glUniform3f(curS->getUniform("MatDif"), 0.04, 0.5, 0.9);
-    			//glUniform3f(curS->getUniform("MatSpec"), 0.02, 0.25, 0.45);
-    			//glUniform1f(curS->getUniform("MatShine"), 27.9);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.02, 0.25, 0.45);
+    			glUniform1f(curS->getUniform("MatShine"), 27.9);
     		break;
+			case 3: // Polished Gold
+    			glUniform3f(curS->getUniform("MatAmb"), 0.247, 0.224, 0.064);  // Warm golden ambient
+    			glUniform3f(curS->getUniform("MatDif"), 0.8, 0.6, 0.2);  // Stronger golden tone in diffuse
+    			glUniform3f(curS->getUniform("MatSpec"), 1.0, 0.85, 0.55); // Warm highlight, less green
+    			glUniform1f(curS->getUniform("MatShine"), 128.0); // Very high shininess for polished metal
+			break;
+
+
   		}
 	}
 
@@ -374,23 +385,31 @@ public:
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 		glUniform3f(prog->getUniform("lightPos"), 2.0, 2.0, 2.9);
+		glUniform3f(prog->getUniform("lightColor"), 1.0, 1.0, 1.0);
 
 		// draw the array of bunnies
 		Model->pushMatrix();
 
 		float sp = 3.0;
 		float off = -3.5;
-		  for (int i =0; i < 3; i++) {
-		  	for (int j=0; j < 3; j++) {
-			  Model->pushMatrix();
+		for (int i =0; i < 3; i++) {
+			for (int j=0; j < 3; j++) {
+				Model->pushMatrix();
 				Model->translate(vec3(off+sp*i, -1, off+sp*j));
 				Model->scale(vec3(0.85, 0.85, 0.85));
 				SetMaterial(prog, (i+j)%3);
 				glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
 				theBunny->draw(prog);
-			  Model->popMatrix();
+				Model->popMatrix();
 			}
-		  }
+		}
+
+		Model->translate(vec3(0, -2, -10));
+		Model->scale(3);
+		Model->rotate(M_PI_4, vec3(0, 1, 0));
+		SetMaterial(prog, 3);
+		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
+		theBunny->draw(prog);
 		Model->popMatrix();
 
 		//draw the waving HM

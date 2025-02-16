@@ -4,6 +4,9 @@ out vec4 color;
 
 uniform vec3 MatAmb;
 uniform vec3 MatDif;
+uniform vec3 MatSpec;
+uniform float MatShine;
+uniform vec3 lightColor;
 
 //interpolated normal and light vector in camera space
 in vec3 fragNor;
@@ -18,5 +21,11 @@ void main()
 	vec3 light = normalize(lightDir);
 
 	float dC = max(dot(normal, light), 0.0);
-	color = vec4(MatAmb + dC * MatDif, 1.0);
+	vec3 diffuse_color = dC * MatDif * lightColor;
+
+	vec3 halfway = normalize(-EPos);
+	float sC = max(pow(dot(halfway, normal), MatShine), 0.0);
+	vec3 spec_color = sC * MatSpec * lightColor;
+
+	color = vec4(MatAmb + diffuse_color + spec_color, 1.0);
 }
