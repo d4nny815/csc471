@@ -40,6 +40,7 @@ public:
 	//our geometry
 	shared_ptr<Shape> sphere;
 	shared_ptr<Shape> cube;
+	vector<shared_ptr<Shape>> skull;
 
 	shared_ptr<Shape> theBunny;
 
@@ -50,7 +51,7 @@ public:
 	GLuint GroundVertexArrayID;
 
 	//the image to use as a texture (ground)
-	// shared_ptr<Texture> texture0;
+	shared_ptr<Texture> crate_text;
 
 	//global data (larger program should be encapsulated)
 	vec3 gMin;
@@ -62,6 +63,7 @@ public:
 	float sTheta = 0;
 	float eTheta = 0;
 	float hTheta = 0;
+	int mat_ind = 0;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -95,6 +97,9 @@ public:
 		}
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		}
+		if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+			mat_ind = (mat_ind + 1) % 4;
 		}
 	}
 
@@ -140,33 +145,31 @@ public:
 		prog->addAttribute("vertPos");
 		prog->addAttribute("vertNor");
 
+
 		// Initialize the GLSL program that we will use for texture mapping
-		// texProg = make_shared<Program>();
-		// texProg->setVerbose(true);
-		// texProg->setShaderNames(resourceDirectory + "/tex_vert.glsl", resourceDirectory + "/tex_frag0.glsl");
-		// texProg->init();
-		// texProg->addUniform("P");
-		// texProg->addUniform("V");
-		// texProg->addUniform("M");
-		// texProg->addUniform("Texture0");
-		// texProg->addAttribute("vertPos");
-		// texProg->addAttribute("vertNor");
-		// texProg->addAttribute("vertTex");
+		texProg = make_shared<Program>();
+		texProg->setVerbose(true);
+		texProg->setShaderNames(resourceDirectory + "/tex_vert.glsl", resourceDirectory + "/tex_frag0.glsl");
+		texProg->init();
+		texProg->addUniform("P");
+		texProg->addUniform("V");
+		texProg->addUniform("M");
+		texProg->addUniform("Texture0");
+		texProg->addUniform("lightColor");
+		texProg->addUniform("lightPos");
+		texProg->addAttribute("vertPos");
+		texProg->addAttribute("vertNor");
+		texProg->addAttribute("vertTex");
 
 		//read in a load the texture
-		// texture0 = make_shared<Texture>();
-  		// texture0->setFilename(resourceDirectory + "/flowers.jpg");
-  		// texture0->init();
-  		// texture0->setUnit(0);
-  		// texture0->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+		crate_text = make_shared<Texture>();
+  		crate_text->setFilename(resourceDirectory + "/skull.jpg");
+  		crate_text->init();
+  		crate_text->setUnit(0);
+  		crate_text->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 	}
 
-	void initGeom(const std::string& resourceDirectory)
-	{
-		// EXAMPLE set up to read one shape from one obj file - convert to read several
-		// Initialize mesh
-		// Load geometry
- 		// Some obj files contain material information.We'll ignore them for this assignment.
+	void initGeom(const std::string& resourceDirectory) {
  		vector<tinyobj::shape_t> TOshapes;
  		vector<tinyobj::material_t> objMaterials;
  		string errStr;
@@ -182,16 +185,9 @@ public:
 			sphere->init();
 		}
 		
-		//read out information stored in the shape about its size - something like this...
-		//then do something with that information.....
-		gMin.x = sphere->min.x;
-		gMin.y = sphere->min.y;
-
-		// Initialize bunny mesh.
 		vector<tinyobj::shape_t> TOshapesB;
  		vector<tinyobj::material_t> objMaterialsB;
-		//load in the mesh and make the shape(s)
- 		rc = tinyobj::LoadObj(TOshapesB, objMaterialsB, errStr, (resourceDirectory + "/bunny.obj").c_str());
+ 		rc = tinyobj::LoadObj(TOshapesB, objMaterialsB, errStr, (resourceDirectory + "/bunnyNoNorm.obj").c_str());
 		if (!rc) {
 			cerr << errStr << endl;
 		} else {
@@ -215,14 +211,27 @@ public:
 			cube->init();
 		}
 
-		//code to load in the ground plane (CPU defined data passed to GPU)
-		// initGround();
+		vector<tinyobj::shape_t> TOshapes_skull;
+ 		vector<tinyobj::material_t> objMaterials_skull;
+ 		rc = tinyobj::LoadObj(TOshapes_skull, objMaterials_skull, errStr, (resourceDirectory + "/skull.obj").c_str());
+		if (!rc) {
+			cerr << errStr << endl;
+		} else {
+			for (auto shape: TOshapes_skull) {
+                auto s = make_shared<Shape>();
+                s->createShape(shape);
+                s->measure();
+                s->init();
+                skull.push_back(s);
+            }
+		}
+
 	}
 
 	//directly pass quad for the ground to the GPU
 	void initGround() {
 
-		float g_groundSize = 20;
+		float g_groundSize = 1;
 		float g_groundY = -0.25;
 
   		// A x-z plane at y = g_groundY of dimension [-g_groundSize, g_groundSize]^2
@@ -276,18 +285,18 @@ public:
      void drawGround(shared_ptr<Program> curS) {
      	curS->bind();
      	glBindVertexArray(GroundVertexArrayID);
-     	// texture0->bind(curS->getUniform("Texture0"));
+     	crate_text->bind(curS->getUniform("Texture0"));
 		//draw the ground plane 
   		SetModel(curS, vec3(0, -1, 0), 0, 0, 1);
-  		glEnableVertexAttribArray(0);
+  		glEnableVertexAttribArray(0); // vert pos
   		glBindBuffer(GL_ARRAY_BUFFER, GrndBuffObj);
   		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-  		glEnableVertexAttribArray(1);
+  		glEnableVertexAttribArray(1); // vert norm
   		glBindBuffer(GL_ARRAY_BUFFER, GrndNorBuffObj);
   		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-  		glEnableVertexAttribArray(2);
+  		glEnableVertexAttribArray(2); // vert text
   		glBindBuffer(GL_ARRAY_BUFFER, GrndTexBuffObj);
   		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
@@ -303,41 +312,40 @@ public:
 
      //helper function to pass material data to the GPU
 	void SetMaterial(shared_ptr<Program> curS, int i) {
-
-    	switch (i) {
-    		case 0: //
-    			glUniform3f(curS->getUniform("MatAmb"), 0.096, 0.046, 0.095);
-    			glUniform3f(curS->getUniform("MatDif"), 0.96, 0.46, 0.95);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.23, 0.45);
-    			glUniform1f(curS->getUniform("MatShine"), 120.0);
-    		break;
-    		case 1: // 
-    			glUniform3f(curS->getUniform("MatAmb"), 0.063, 0.038, 0.1);
-    			glUniform3f(curS->getUniform("MatDif"), 0.63, 0.38, 1.0);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.3, 0.2, 0.5);
-    			glUniform1f(curS->getUniform("MatShine"), 4.0);
-    		break;
-    		case 2: //
-    			glUniform3f(curS->getUniform("MatAmb"), 0.004, 0.05, 0.09);
-    			glUniform3f(curS->getUniform("MatDif"), 0.04, 0.5, 0.9);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.02, 0.25, 0.45);
-    			glUniform1f(curS->getUniform("MatShine"), 27.9);
-    		break;
+		switch (i) {
+			case 0: //
+				glUniform3f(curS->getUniform("MatAmb"), 0.096, 0.046, 0.095);
+				glUniform3f(curS->getUniform("MatDif"), 0.96, 0.46, 0.95);
+				glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.23, 0.45);
+				glUniform1f(curS->getUniform("MatShine"), 120.0);
+				break;
+			case 1: // 
+				glUniform3f(curS->getUniform("MatAmb"), 0.063, 0.038, 0.1);
+				glUniform3f(curS->getUniform("MatDif"), 0.63, 0.38, 1.0);
+				glUniform3f(curS->getUniform("MatSpec"), 0.3, 0.2, 0.5);
+				glUniform1f(curS->getUniform("MatShine"), 4.0);
+				break;
+			case 2: //
+				glUniform3f(curS->getUniform("MatAmb"), 0.004, 0.05, 0.09);
+				glUniform3f(curS->getUniform("MatDif"), 0.04, 0.5, 0.9);
+				glUniform3f(curS->getUniform("MatSpec"), 0.02, 0.25, 0.45);
+				glUniform1f(curS->getUniform("MatShine"), 27.9);
+				break;
 			case 3: // Polished Gold
-    			glUniform3f(curS->getUniform("MatAmb"), 0.247, 0.224, 0.064);  // Warm golden ambient
-    			glUniform3f(curS->getUniform("MatDif"), 0.8, 0.6, 0.2);  // Stronger golden tone in diffuse
-    			glUniform3f(curS->getUniform("MatSpec"), 1.0, 0.85, 0.55); // Warm highlight, less green
-    			glUniform1f(curS->getUniform("MatShine"), 128.0); // Very high shininess for polished metal
-			break;
-			case 4: // Polished Gold
-    			glUniform3f(curS->getUniform("MatAmb"), 0.147, 0.024, 0.064);  // Warm golden ambient
-    			glUniform3f(curS->getUniform("MatDif"), 0.0, 0.0, 0.0);  // Stronger golden tone in diffuse
-    			glUniform3f(curS->getUniform("MatSpec"), 1.0, 0.85, 0.95); // Warm highlight, less green
-    			glUniform1f(curS->getUniform("MatShine"), 5.0); // Very high shininess for polished metal
-			break;
+				glUniform3f(curS->getUniform("MatAmb"), 0.247, 0.224, 0.064);  // Warm golden ambient
+				glUniform3f(curS->getUniform("MatDif"), 0.8, 0.6, 0.2);  // Stronger golden tone in diffuse
+				glUniform3f(curS->getUniform("MatSpec"), 1.0, 0.85, 0.55); // Warm highlight, less green
+				glUniform1f(curS->getUniform("MatShine"), 128.0); // Very high shininess for polished metal
+				break;
+			case 4:
+				glUniform3f(curS->getUniform("MatAmb"), 0.147, 0.024, 0.064);  // Warm golden ambient
+				glUniform3f(curS->getUniform("MatDif"), 0.4, 0.1, 0.0);  // Stronger golden tone in diffuse
+				glUniform3f(curS->getUniform("MatSpec"), 1.0, 0.85, 0.95); // Warm highlight, less green
+				glUniform1f(curS->getUniform("MatShine"), 5.0); // Very high shininess for polished metal
+				break;
 
 
-  		}
+		}
 	}
 
 	/* helper function to set model trasnforms */
@@ -355,19 +363,19 @@ public:
    	}
 
    	/* code to draw waving hierarchical model */
-   	void drawHierModel(shared_ptr<MatrixStack> Model) {
-   		// draw hierarchical mesh - replace with your code if desired
+	void drawHierModel(shared_ptr<MatrixStack> Model) {
+		// draw hierarchical mesh - replace with your code if desired
 		Model->pushMatrix();
-			Model->loadIdentity();
-			Model->translate(vec3(gTrans, 0, 6));
-			
-			//draw the torso with these transforms
-			Model->pushMatrix();
-			  Model->scale(vec3(1.15, 1.35, 1.0));
-			  setModel(prog, Model);
-			  sphere->draw(prog);
-			Model->popMatrix();
-			
+		Model->loadIdentity();
+		Model->translate(vec3(gTrans, 0, 6));
+
+		//draw the torso with these transforms
+		Model->pushMatrix();
+		Model->scale(vec3(1.15, 1.35, 1.0));
+		setModel(prog, Model);
+		sphere->draw(prog);
+		Model->popMatrix();
+
 		Model->popMatrix();
    	}
 
@@ -405,75 +413,83 @@ public:
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 		
-		vec3 light_pos(lightTrans, 2.0, 2.0);
+		// draw the array of bunnies
+		Model->pushMatrix(); // main push
+		
+		Model->pushMatrix(); // light push
+		vec3 light_pos(lightTrans, sTheta * 3 + 3.0, 2.0);
 		vec3 light_color(1.0, 1.0, 1.0);
 		glUniform3f(prog->getUniform("lightPos"), 
 			light_pos.x, light_pos.y, light_pos.z);
 		glUniform3f(prog->getUniform("lightColor"), 
 			light_color.x, light_color.y, light_color.z);
 
-		// draw the array of bunnies
-		Model->pushMatrix();
+		Model->popMatrix(); // light pop
 
 		Model->translate(vec3(0, 0, -10));
-		
-		float sp = 1.0;
-		float off = -5.5;
-		for (int i =0; i < 3; i++) {
-			for (int j=0; j < 3; j++) {
-				Model->pushMatrix();
-				Model->translate(vec3(off+sp*i, -1, off+sp*j));
-				Model->scale(vec3(0.85, 0.85, 0.85));
-				SetMaterial(prog, (i+j)%3);
-				glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
-				theBunny->draw(prog);
-				Model->popMatrix();
-			}
+
+		prog->unbind();
+		texProg->bind();
+
+		glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+
+		Model->pushMatrix(); // skull push
+		Model->translate(vec3(0, -1, sTheta * 2));
+		Model->scale(.1);
+		Model->rotate(-M_PI_2, vec3(1, 0, 0));
+		glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
+		for (auto shape : skull) {
+			shape->draw(texProg);
 		}
-
-		Model->translate(vec3(0, -2, 0));
-		Model->scale(3);
-		Model->rotate(M_PI_4, vec3(0, 1, 0));
-		SetMaterial(prog, 3);
-		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
-		theBunny->draw(prog);
-
-		Model->pushMatrix();
-		Model->rotate(-M_PI_4, vec3(0, 1, 0));
+		Model->popMatrix(); // skull pop
 		
-		Model->pushMatrix();
-		Model->translate(vec3(0, 1, 3));
-		Model->scale(vec3(5, 2, 10));
+		texProg->unbind();
+		prog->bind();
+
+		Model->pushMatrix(); // table and room push
+		Model->scale(3);
+
+		// draw the room
+		Model->pushMatrix(); // room push
+		Model->translate(vec3(0, 0, 3));
+		Model->scale(vec3(10, 10, 10));
 		SetMaterial(prog, 1);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
 		cube->draw(prog);
-		Model->popMatrix();
+		Model->popMatrix(); // room pop
 
-		Model->scale(vec3(1, .1, 1));
-		Model->translate(vec3(0, 2.5, 2));
-		SetMaterial(prog, 4);
+
+		// draw the table
+		Model->translate(vec3(0, -.5, 2));
+		Model->scale(vec3(1, .05, 1)); 
+		SetMaterial(prog, mat_ind);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
 		cube->draw(prog);
+	
+		Model->pushMatrix(); // bunny push
+		Model->translate(vec3(0, -1, 0));
+		Model->rotate(M_PI_4, vec3(0, 1, 0));
+		Model->scale(vec3(2, 1 / .05 * 2, 2));
+		SetMaterial(prog, 4);
+		setModel(prog, Model);
+		theBunny->draw(prog);
+		Model->popMatrix(); // bunny pop	
+
+
+		Model->popMatrix(); // table and room pop
 		
-		Model->popMatrix();
+		  
+		Model->popMatrix(); // main pop
 
-		Model->popMatrix();
-
-		//draw the waving HM
+		//draw the sphere
 		SetMaterial(prog, 1);
 		drawHierModel(Model);
 
 		prog->unbind();
 
 		//switch shaders to the texture mapping shader and draw the ground
-		// texProg->bind();
-		// glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-		// glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
-		// glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
-				
-		// drawGround(texProg);
-
-		// texProg->unbind();
+		
 		
 		//animation update example
 		sTheta = sin(glfwGetTime());
