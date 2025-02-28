@@ -72,19 +72,14 @@ public:
 	float cam_rot_x = 0;
 	float cam_rot_y = 0;
 
+	vec3 eyePos = vec3(0, 1, 0);
+
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		//update global camera rotate
-		// if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-		// 	cam_rot_x -= 0.2;
-		// }
-		// if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-		// 	cam_rot_x += 0.2;
-		// }
 		//update camera height
 		if (key == GLFW_KEY_S && action == GLFW_PRESS){
 			gCamH  += 0.25;
@@ -107,6 +102,18 @@ public:
 		}
 	}
 
+	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) {
+		cam_rot_x += deltaX;
+		
+		if (cam_rot_y > -80 && deltaY > 0) {
+			cam_rot_y -= deltaY;
+		} else if (cam_rot_y < 80 && deltaY < 0) {
+			cam_rot_y -= deltaY;
+		}
+
+		// printf("x %f y %f\n", cam_rot_x, cam_rot_y);
+	}
+
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
 	{
 		double posX, posY;
@@ -116,11 +123,6 @@ public:
 			glfwGetCursorPos(window, &posX, &posY);
 			cout << "Pos X " << posX <<  " Pos Y " << posY << endl;
 		}
-
-		if (action == GLFW_RAW_MOUSE_MOTION) {
-			cam_rot_y += .1;
-		}
-		
 
 	}
 
@@ -467,19 +469,26 @@ public:
 		Projection->pushMatrix();
 		Projection->perspective(45.0f, aspect, 0.01f, 100.0f);
 
-		// View is global translation along negative z for now
-		View->pushMatrix();
-		View->loadIdentity();
-		//camera up and down
-		View->translate(vec3(0, gCamH, 0));
-		//global rotate (the whole scene )
-		View->rotate(cam_rot_x, Y_AXIS);
-		View->rotate(cam_rot_y, X_AXIS);
+		float view_rad = 1;
+		vec3 eye_pos = glm::vec3(0, gCamH, 0);
+		vec3 up_vector = Y_AXIS;
+		
+		float cam_rot_x_rad = cam_rot_x * M_PI / 180;
+		float cam_rot_y_rad = cam_rot_y * M_PI / 180;
+
+		vec3 look_point = glm::vec3(0, gCamH, 0);
+		look_point.x += view_rad * cos(cam_rot_x_rad);
+		look_point.z += view_rad * sin(cam_rot_x_rad);
+
+		look_point.y += view_rad * sin(cam_rot_y_rad);
+
+		glm::mat4 view = glm::lookAt(eye_pos, look_point, up_vector);
 
 		// Draw the scene
 		texProg->bind();
 		glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-		glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+		glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(view));
+		// glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
 		glUniform3f(texProg->getUniform("lightPos"), 2.0+lightTrans, 2.0, 2.9);
 		glUniform1f(texProg->getUniform("MatShine"), 27.9);
 		glUniform1i(texProg->getUniform("flip"), 1);
@@ -523,7 +532,8 @@ public:
 		//switch shaders to the texture mapping shader and draw the ground
 		texProg->bind();
 		glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-		glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+		// glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(View->topMatrix()));
+		glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, value_ptr(view));
 		glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, value_ptr(Model->topMatrix()));
 		glUniform3f(texProg->getUniform("lightPos"), 2.0+lightTrans, 2.0, 2.9);
 		glUniform1f(texProg->getUniform("MatShine"), 27.9);	
@@ -540,7 +550,6 @@ public:
 
 		// Pop matrix stacks.
 		Projection->popMatrix();
-		View->popMatrix();
 	}
 };
 
