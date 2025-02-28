@@ -21,6 +21,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define X_AXIS	(vec3(1, 0, 0))
+#define Y_AXIS	(vec3(0, 1, 0))
+#define Z_AXIS	(vec3(0, 0, 1))
+
 using namespace std;
 using namespace glm;
 
@@ -65,6 +69,9 @@ public:
 	float eTheta = 0;
 	float hTheta = 0;
 
+	float cam_rot_x = 0;
+	float cam_rot_y = 0;
+
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -72,12 +79,12 @@ public:
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		//update global camera rotate
-		if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-			gRot -= 0.2;
-		}
-		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-			gRot += 0.2;
-		}
+		// if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+		// 	cam_rot_x -= 0.2;
+		// }
+		// if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+		// 	cam_rot_x += 0.2;
+		// }
 		//update camera height
 		if (key == GLFW_KEY_S && action == GLFW_PRESS){
 			gCamH  += 0.25;
@@ -106,9 +113,15 @@ public:
 
 		if (action == GLFW_PRESS)
 		{
-			 glfwGetCursorPos(window, &posX, &posY);
-			 cout << "Pos X " << posX <<  " Pos Y " << posY << endl;
+			glfwGetCursorPos(window, &posX, &posY);
+			cout << "Pos X " << posX <<  " Pos Y " << posY << endl;
 		}
+
+		if (action == GLFW_RAW_MOUSE_MOTION) {
+			cam_rot_y += .1;
+		}
+		
+
 	}
 
 	void resizeCallback(GLFWwindow *window, int width, int height)
@@ -460,7 +473,8 @@ public:
 		//camera up and down
 		View->translate(vec3(0, gCamH, 0));
 		//global rotate (the whole scene )
-		View->rotate(gRot, vec3(0, 1, 0));
+		View->rotate(cam_rot_x, Y_AXIS);
+		View->rotate(cam_rot_y, X_AXIS);
 
 		// Draw the scene
 		texProg->bind();
@@ -527,7 +541,6 @@ public:
 		// Pop matrix stacks.
 		Projection->popMatrix();
 		View->popMatrix();
-
 	}
 };
 
