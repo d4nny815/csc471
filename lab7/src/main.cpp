@@ -49,8 +49,10 @@ public:
 	GLuint GroundVertexArrayID;
 
 	//the image to use as a texture (ground)
-	shared_ptr<Texture> texture0;
-	shared_ptr<Texture> texture1;	
+	shared_ptr<Texture> tex_grass;
+	shared_ptr<Texture> tex_wood;	
+	shared_ptr<Texture> tex_world;	
+	shared_ptr<Texture> tex_sky;	
 
 	//global data (larger program should be encapsulated)
 	vec3 gMin;
@@ -156,17 +158,29 @@ public:
 		texProg->addAttribute("vertTex");
 
 		//read in a load the texture
-		texture0 = make_shared<Texture>();
-  		texture0->setFilename(resourceDirectory + "/Caillebotte.jpg");
-  		texture0->init();
-  		texture0->setUnit(0);
-  		texture0->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+		tex_grass = make_shared<Texture>();
+  		tex_grass->setFilename(resourceDirectory + "/grass.jpg");
+  		tex_grass->init();
+  		tex_grass->setUnit(10);
+  		tex_grass->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-  		texture1 = make_shared<Texture>();
-  		texture1->setFilename(resourceDirectory + "/cartoonSky.png");
-  		texture1->init();
-  		texture1->setUnit(1);
-  		texture1->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+  		tex_wood = make_shared<Texture>();
+  		tex_wood->setFilename(resourceDirectory + "/cartoonWood.jpg");
+  		tex_wood->init();
+  		tex_wood->setUnit(0);
+  		tex_wood->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+		tex_sky = make_shared<Texture>();
+  		tex_sky->setFilename(resourceDirectory + "/cartoonSky.png");
+  		tex_sky->init();
+  		tex_sky->setUnit(2);
+  		tex_sky->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+		tex_world = make_shared<Texture>();
+  		tex_world->setFilename(resourceDirectory + "/world.jpg");
+  		tex_world->init();
+  		tex_world->setUnit(3);
+  		tex_world->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
 	}
 
@@ -269,7 +283,8 @@ public:
      void drawGround(shared_ptr<Program> curS) {
      	curS->bind();
      	glBindVertexArray(GroundVertexArrayID);
-     	texture0->bind(curS->getUniform("Texture0"));
+     	tex_grass->bind(curS->getUniform("Texture0"));
+		
 		//draw the ground plane 
   		SetModel(vec3(0, -1, 0), 0, 0, 1, curS);
   		glEnableVertexAttribArray(0);
@@ -454,7 +469,7 @@ public:
 		glUniform3f(texProg->getUniform("lightPos"), 2.0+lightTrans, 2.0, 2.9);
 		glUniform1f(texProg->getUniform("MatShine"), 27.9);
 		glUniform1i(texProg->getUniform("flip"), 1);
-		texture1->bind(texProg->getUniform("Texture0"));
+		tex_wood->bind(texProg->getUniform("Texture0"));
 		// draw the array of bunnies
 		Model->pushMatrix();
 
@@ -476,17 +491,17 @@ public:
 
 		//draw the waving HM
 		//SetMaterial(texProg, 1);
-		texture1->bind(texProg->getUniform("Texture0"));
+		tex_world->bind(texProg->getUniform("Texture0"));
 		drawHierModel(Model, texProg);
 
 		//draw big background sphere
 		glUniform1i(texProg->getUniform("flip"), 0);
-		texture1->bind(texProg->getUniform("Texture0"));
+		tex_sky->bind(texProg->getUniform("Texture0"));
 		Model->pushMatrix();
-			Model->loadIdentity();
-			Model->scale(vec3(8.0));
-			setModel(texProg, Model);
-			sphere->draw(texProg);
+		Model->loadIdentity();
+		Model->scale(vec3(8.0));
+		setModel(texProg, Model);
+		sphere->draw(texProg);
 		Model->popMatrix();
 
 		texProg->unbind();
