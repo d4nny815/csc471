@@ -46,49 +46,43 @@ float vec3::length_squared() const {
     return data[0] * data[0] + data[1] * data[1] + data[2] * data[2]; 
 }
 
-inline vec3 operator+(const vec3& u, const vec3& v) {
-    return vec3(u.data[0] + v.data[0], 
-        u.data[1] + v.data[1], 
-        u.data[2] + v.data[2]);
+vec3 operator+(const vec3& u, const vec3& v) {
+    return vec3(u.data[0] + v.data[0], u.data[1] + v.data[1], u.data[2] + v.data[2]);
 }
 
-inline vec3 operator-(const vec3& u, const vec3& v) {
-    return vec3(u.data[0] - v.data[0], 
-        u.data[1] - v.data[1],
-        u.data[2] - v.data[2]);
+vec3 operator-(const vec3& u, const vec3& v) {
+    return vec3(u.data[0] - v.data[0], u.data[1] - v.data[1], u.data[2] - v.data[2]);
 }
 
-inline vec3 operator*(const vec3& u, const vec3& v) {
-    return vec3(u.data[0] * v.data[0], 
-        u.data[1] * v.data[1], 
-        u.data[2] * v.data[2]);
+vec3 operator*(const vec3& u, const vec3& v) {
+    return vec3(u.data[0] * v.data[0], u.data[1] * v.data[1], u.data[2] * v.data[2]);
 }
 
-inline vec3 operator*(float t, const vec3& v) {
-    return vec3(t * v.data[0], t * v.data[1], t * v.data[2]);
+vec3 operator*(float t, const vec3& v) {
+    return vec3(t*v.data[0], t*v.data[1], t*v.data[2]);
 }
 
-inline vec3 operator*(const vec3& v, float t) {
+vec3 operator*(const vec3& v, float t) {
     return t * v;
 }
 
 vec3 operator/(const vec3& v, float t) {
-    return vec3(v.data[0] / t, v.data[1] / t, v.data[2] / t);
+    return (1/t) * v;
 }
 
-inline float dot(const vec3& u, const vec3& v) {
+float dot(const vec3& u, const vec3& v) {
     return u.data[0] * v.data[0] + 
             u.data[1] * v.data[1] + 
             u.data[2] * v.data[2];  
 }
 
-inline vec3 cross(const vec3& u, const vec3& v) {
+vec3 cross(const vec3& u, const vec3& v) {
     return vec3(u.data[1] * v.data[2] - u.data[2] * v.data[1],
             u.data[2] * v.data[0] - u.data[0] * v.data[2],
             u.data[0] * v.data[1] - u.data[1] * v.data[0]);
 }
 
-inline vec3 unit_vector(const vec3& v) {
+vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
 
