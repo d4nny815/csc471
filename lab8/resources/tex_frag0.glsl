@@ -1,6 +1,7 @@
 #version 330 core
 uniform sampler2D Texture0;
 uniform int flip;
+uniform float MatShine;
 
 in vec3 fragNor;
 in vec3 lightDir;
@@ -18,8 +19,11 @@ void main() {
 	vec3 light = normalize(lightDir);
 	float dC = max(0, dot(normal, light));
 
+  vec3 halfway = normalize(-EPos);
+	float sC = max(pow(dot(halfway, normal), MatShine), 0.0);
+
   //to set the out color as the texture color 
-  Outcolor = dC * texColor0;
+  Outcolor = dC * texColor0 + sC * texColor0;
   if (Outcolor.b > .7) {
     Outcolor = vec4(1, Outcolor.g * .6, 0, 1);
   }
