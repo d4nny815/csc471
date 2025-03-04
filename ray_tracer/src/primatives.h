@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+// * vec3
 class vec3 {
 public:
     float data[3];
@@ -25,24 +26,36 @@ public:
     float length() const;
     float length_squared() const;
     
-    inline vec3 operator+(const vec3& u) const;    
-    inline vec3 operator-(const vec3& u) const;
-    inline vec3 operator*(const vec3& u) const;
-    inline vec3 operator*(double t) const;
-    inline vec3 operator/(double t) const;
-    
-    inline float dot(const vec3& u, const vec3& v);
-    inline vec3 cross(const vec3& u, const vec3& v);
-    inline vec3 unit_vector(const vec3& v);
-    
     inline void print(FILE* fp) {
         fprintf(fp, "<%f, %f, %f>\n", data[0], data[1], data[2]);
     }
 };
 
+inline vec3 operator+(const vec3& u, const vec3& v);
+inline vec3 operator-(const vec3& u, const vec3& v);
+inline vec3 operator*(float t, const vec3& v);
+vec3 operator/(const vec3& v, float t);
+inline float dot(const vec3& u, const vec3& v);
+inline vec3 cross(const vec3& u, const vec3& v);
+inline vec3 unit_vector(const vec3& v);
+
 using point3 = vec3; // alias for coords
 
+// * Color
 using color = vec3; // alias for colors
 void write_color(FILE* fp, const color& c);
+
+class ray {
+public:
+    point3 origin;
+    vec3 dir;
+
+    ray() {}
+    ray(const vec3& origin, const vec3& direction) 
+        : origin(origin), dir(direction) {}
+    
+    point3 at(float t) const;
+
+};
 
 #endif /* primatives.h */
