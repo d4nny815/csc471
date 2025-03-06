@@ -5,60 +5,13 @@
 
 #include "primatives.h"
 #include "util.h"
+#include "camera.h"
 
 #define RED     (color(1, 0, 0))
 #define GREEN   (color(0, 1, 0))
 #define BLUE    (color(0, 0, 1))
 #define WHITE   (color(1, 1, 1))
 #define BLACK   (color(0, 0, 0))
-
-class Camera {
-public:
-    float focal_length;
-    float viewport_height;
-    float viewport_width;
-    point3 cam_pos;
-    vec3 v_u, v_v;
-    vec3 pixel_du, pixel_dv;
-    vec3 viewport_upper_left;
-    vec3 pixel00_loc;
-
-    Camera(float aspect_ratio, size_t image_width, size_t image_height) {
-        focal_length = 1.0f;
-        viewport_height = 2.0f;
-        viewport_width = viewport_height * aspect_ratio;
-        cam_pos = point3(0, 0, 0);
-
-        // Calculate viewport vectors
-        v_u = vec3(viewport_width, 0, 0);
-        v_v = vec3(0, -viewport_height, 0);
-
-        // Calculate delta viewport vectors
-        pixel_du = v_u / image_width;
-        pixel_dv = v_v / image_height;
-
-        // Calculate upper-left corner of viewport
-        viewport_upper_left = cam_pos - vec3(0, 0, focal_length);
-        viewport_upper_left = viewport_upper_left - v_u / 2 - v_v / 2;
-        pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
-    }
-
-    ray get_ray(size_t col, size_t row) {
-        vec3 pixel_center = pixel00_loc + (col * pixel_du) + (row * pixel_dv);
-        vec3 ray_dir = pixel_center - cam_pos;
-        return ray(cam_pos, ray_dir);
-    }
-
-    color ray_color(const ray& r, const hittable& world) const {
-        hit_record rec;
-        if (world.hit(r, interval(0, MY_INFINITY), rec)) {
-        return 0.5 * (rec.normal + color(1,1,1));
-        }
-        vec3 unit_direction = unit_vector(r.dir);
-        auto a = 0.5*(unit_direction.y() + 1.0);
-        return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
-    }
-};
 
 class Application {
 public:
@@ -77,7 +30,7 @@ public:
             running = false;
         }
 
-        window = SDL_CreateWindow("Ray Tracer in SDL",
+        window = SDL_CreateWindow("Ray Tracer",
                                   SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                   image_width, image_height, SDL_WINDOW_SHOWN);
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -112,8 +65,8 @@ public:
     void run() {
         if (!running) return;
 
-        // create camera object
-        Camera camera(static_cast<float>(image_width) / image_height, image_width, image_height);
+        Camera camera(static_cast<float>(image_width) / image_height
+            , image_width, image_height);
 
         // objects
         hittable_list world;
@@ -123,7 +76,6 @@ public:
 
         SDL_Event event;
         while (running) {
-            // Render each pixel
             for (size_t row = 0; row < image_height; row++) {
                 for (size_t col = 0; col < image_width; col++) {
                     ray r = camera.get_ray(col, row);
