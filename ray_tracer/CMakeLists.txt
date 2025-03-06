@@ -18,7 +18,6 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS})
 message(STATUS "Adding GCC style compiler flags")
 add_compile_options("-Wall" "-pedantic" "-Werror=return-type")
 
-# Find SDL2
 find_package(SDL2 REQUIRED)
 
 if(SDL2_FOUND)
