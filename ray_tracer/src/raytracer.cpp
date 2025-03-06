@@ -13,7 +13,6 @@
 #define BLACK   (color(0, 0, 0))
 
 color ray_color(const ray& r, const hittable& world) {
-    return RED;
     hit_record hr;
     if (world.hit(r, interval(0, MY_INFINITY), hr)) {
         return .5 * (hr.normal + color(1, 1, 1));
@@ -67,7 +66,7 @@ int main(void) {
     viewport_upper_left = viewport_upper_left - v_u / 2 - v_v / 2; 
     vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
 
-    // Objects (hittable_list)
+    // Objects 
     hittable_list world;
     world.add(make_shared<sphere>(point3(0, 0, -1), .5));
     world.add(make_shared<sphere>(point3(.8, 0, -1), .2));
@@ -83,15 +82,11 @@ int main(void) {
         return 1;
     }
 
-    // Frame buffer allocation
     Uint32* frame_buffer = new Uint32[image_width * image_height];
 
     bool running = true;
     SDL_Event event;
     while (running) {
-        // Clear the frame buffer before recomputing the image
-        std::fill(frame_buffer, frame_buffer + (image_width * image_height), 0);
-
         // Ray tracing loop inside the event loop
         for (size_t row = 0; row < image_height; row++) {
             for (size_t col = 0; col < image_width; col++) {
@@ -101,21 +96,14 @@ int main(void) {
 
                 color pixel_color = ray_color(r, world);
 
-                // Convert color to RGB (0-255 range)
-                // int red = static_cast<int>(pixel_color.x() * 255.999);
-                int red = 0;
+                int red = static_cast<int>(pixel_color.x() * 255.999);
                 int green = static_cast<int>(pixel_color.y() * 255.999);
                 int blue = static_cast<int>(pixel_color.z() * 255.999);
-
-                // Ensure color is clamped between 0 and 255
-                red = std::min(255, std::max(0, red));
-                green = std::min(255, std::max(0, green));
-                blue = std::min(255, std::max(0, blue));
 
                 // Map to SDL color
                 SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
                 Uint32 color = SDL_MapRGB(format, red, green, blue);
-                SDL_FreeFormat(format);  // Don't forget to free the format after use
+                SDL_FreeFormat(format);
 
                 // Store the color in the frame buffer
                 frame_buffer[row * image_width + col] = color;
@@ -125,11 +113,8 @@ int main(void) {
         // Update the texture with the new frame buffer data
         SDL_UpdateTexture(texture, NULL, frame_buffer, image_width * sizeof(Uint32));
 
-        // Process SDL events
+        // keyboard movements
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = false;
-            }
             if (event.type == SDL_KEYDOWN && 
                 event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
                 running = false;
@@ -143,8 +128,8 @@ int main(void) {
     }
 
     // Cleanup
-    SDL_DestroyTexture(texture);
     delete[] frame_buffer;
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
