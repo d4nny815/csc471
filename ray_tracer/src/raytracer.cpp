@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "primatives.h"
+#include "util.h"
 
 #define RED     (color(1, 0, 0))
 #define GREEN   (color(0, 1, 0))
@@ -10,26 +11,10 @@
 #define WHITE   (color(1, 1, 1))
 #define BLACK   (color(0, 0, 0))
 
-float hit_sphere(const point3& center, float radius, const ray& r) {
-    vec3 origin_2_center = center - r.origin;
-    float a = r.dir.length_squared();
-    float h = dot(r.dir, center - r.origin);
-    float c = dot(origin_2_center, origin_2_center) - radius * radius;
-    float discrimant = h * h - a * c;
-    if (discrimant < 0) return -1;
-    return (h - std::sqrt(h * h - a * c)) / (a); 
-    // get the first hit point thats why - and not +
-}
-
-color ray_color(const ray& r) {
-    vec3 sphere_center = vec3(0, 0, -1);
-    float sphere_radius = .5;
-    float t = hit_sphere(sphere_center, sphere_radius, r);
-
-    if (t > 0) {
-        point3 hit_point = r.at(t); 
-        vec3 normal = unit_vector(hit_point - sphere_center);
-        return .5 * color(normal.x() + 1, normal.y() + 1, normal.z() + 1);
+color ray_color(const ray& r, const hittable& world) {
+    hit_record hr;
+    if (world.hit(r, interval(0, MY_INFINITY), hr)) {
+        return .5 * (hr.normal + color(1, 1, 1));
     }
 
     vec3 unit_direction = unit_vector(r.dir);
@@ -68,6 +53,12 @@ int main(void) {
     vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
 
 
+    // objects
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0, 0, -1), .5));
+    world.add(make_shared<sphere>(point3(.8, 0, -1), .2));
+    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
+
     for (size_t row = 0; row < image_height; row++) {
         fprintf(stderr, "\rScanlines remaining: %zu ", (image_height - row));
         for (size_t col = 0; col < image_width; col++) {
@@ -75,7 +66,7 @@ int main(void) {
             vec3 ray_dir = pixel_center - cam_pos;
             ray r(cam_pos, ray_dir);
 
-            color pixel_color = ray_color(r);
+            color pixel_color = ray_color(r, world);
             write_color(stdout, pixel_color);
         }
     }

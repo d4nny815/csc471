@@ -110,6 +110,67 @@ vec3 ray::at(float t) const {
     return origin + t * dir;
 }
 
+//*============================================================================
+//* sphere
+//*============================================================================
+
+bool sphere::hit(const ray& r, interval t, hit_record& hr) const {
+    vec3 origin_2_center = center - r.origin;
+    float a = r.dir.length_squared();
+    float h = dot(r.dir, center - r.origin);
+    float c = dot(origin_2_center, origin_2_center) - radius * radius;
+    float discrimant = h * h - a * c;
+    
+    if (discrimant < 0) return false;
+
+
+    float sqrt_disc = std::sqrt(h * h - a * c);
+    float root = (h - sqrt_disc) / a; 
+    if (!t.contains(root)) {
+        root = (h + sqrt_disc) / a;
+        if (!t.contains(root)) {
+            return false;
+        }
+    }
+
+    hr.t = root;
+    hr.point = r.at(root);
+    hr.normal = (hr.point - center) / radius;
+
+    return true; 
+}
+
+//*============================================================================
+//* hittable_list
+//*============================================================================
+
+void hittable_list::clear() {
+    objects.clear();
+}
+
+void hittable_list::add(shared_ptr<hittable> object) {
+    objects.push_back(object);
+}
+
+bool hittable_list::hit(const ray& r, interval t, hit_record& hr) const {
+    bool hit_anything = false;
+    hit_record tmp_hr;
+    float closest_intersect = t.max;
+
+    for (const auto& obj : objects) {
+        if (obj->hit(r, interval(t.min, closest_intersect), tmp_hr)) {
+            hit_anything = true;
+            closest_intersect = tmp_hr.t;
+            hr = tmp_hr;
+        }
+    }
+
+    return hit_anything;
+}
+
+
+
+
 
 
 

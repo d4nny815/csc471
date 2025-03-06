@@ -2,6 +2,8 @@
 #define PRIMATIVES_H
 
 #include <stdio.h>
+#include "util.h"
+#include "interval.h"
 
 // * vec3
 class vec3 {
@@ -57,5 +59,46 @@ public:
     point3 at(float t) const;
 
 };
+
+class hit_record {
+public:
+    point3 point;
+    vec3 normal;
+    float t;
+};
+
+class hittable {
+public:
+    virtual ~hittable() = default;
+
+    virtual bool hit(const ray& r, interval t, hit_record& hr) const = 0;
+};
+
+class sphere : public hittable {
+public: 
+    point3 center;
+    float radius;
+
+    sphere() : center(0, 0, 0), radius(1.0) {}
+    sphere(const point3& center, double radius) : 
+        center(center), radius(std::fmax(0,radius)) {}
+
+    bool hit(const ray& r, interval t, hit_record& hr) const override;
+};
+
+class hittable_list : public hittable {
+public:
+    std::vector<shared_ptr<hittable>> objects;
+
+    hittable_list() {}
+    hittable_list(shared_ptr<hittable> object);
+
+    void clear();
+    void add(shared_ptr<hittable> object);
+    bool hit(const ray& r, interval t, hit_record& hr) const override;
+
+};
+
+
 
 #endif /* primatives.h */
