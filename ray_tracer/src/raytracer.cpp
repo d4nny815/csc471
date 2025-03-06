@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <cmath>
 
 #include "primatives.h"
 
@@ -9,18 +10,26 @@
 #define WHITE   (color(1, 1, 1))
 #define BLACK   (color(0, 0, 0))
 
-bool hit_sphere(const point3& center, double radius, const ray& r) {
+float hit_sphere(const point3& center, float radius, const ray& r) {
     vec3 origin_2_center = center - r.origin;
-    float a = dot(r.dir, r.dir);
-    float b = -2 * dot(r.dir, origin_2_center);
+    float a = r.dir.length_squared();
+    float h = dot(r.dir, center - r.origin);
     float c = dot(origin_2_center, origin_2_center) - radius * radius;
-    auto discrimant = b * b - 4 * a * c;
-    return discrimant >= 0;
+    float discrimant = h * h - a * c;
+    if (discrimant < 0) return -1;
+    return (h - std::sqrt(h * h - a * c)) / (a); 
+    // get the first hit point thats why - and not +
 }
 
 color ray_color(const ray& r) {
-    if (hit_sphere(vec3(0, 0, -1), .5, r)) {
-        return RED;
+    vec3 sphere_center = vec3(0, 0, -1);
+    float sphere_radius = .5;
+    float t = hit_sphere(sphere_center, sphere_radius, r);
+
+    if (t > 0) {
+        point3 hit_point = r.at(t); 
+        vec3 normal = unit_vector(hit_point - sphere_center);
+        return .5 * color(normal.x() + 1, normal.y() + 1, normal.z() + 1);
     }
 
     vec3 unit_direction = unit_vector(r.dir);
