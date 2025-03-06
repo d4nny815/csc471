@@ -36,6 +36,7 @@ public:
 vec3 operator+(const vec3& u, const vec3& v); 
 vec3 operator-(const vec3& u, const vec3& v);
 vec3 operator*(float t, const vec3& v);
+vec3 operator*(const vec3& v, float t);
 vec3 operator/(const vec3& v, float t);
 float dot(const vec3& u, const vec3& v);
 vec3 cross(const vec3& u, const vec3& v);

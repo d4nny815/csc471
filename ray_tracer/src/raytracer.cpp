@@ -12,19 +12,17 @@
 #define WHITE   (color(1, 1, 1))
 #define BLACK   (color(0, 0, 0))
 
-color ray_color(const ray& r, const hittable& world) {
-    hit_record hr;
-    if (world.hit(r, interval(0, MY_INFINITY), hr)) {
-        return .5 * (hr.normal + color(1, 1, 1));
-    }
-
-    vec3 unit_direction = unit_vector(r.dir);
-    auto a = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - a) * WHITE + a * BLUE;
-}
-
 class Camera {
 public:
+    float focal_length;
+    float viewport_height;
+    float viewport_width;
+    point3 cam_pos;
+    vec3 v_u, v_v;
+    vec3 pixel_du, pixel_dv;
+    vec3 viewport_upper_left;
+    vec3 pixel00_loc;
+
     Camera(float aspect_ratio, size_t image_width, size_t image_height) {
         focal_length = 1.0f;
         viewport_height = 2.0f;
@@ -51,19 +49,27 @@ public:
         return ray(cam_pos, ray_dir);
     }
 
-private:
-    float focal_length;
-    float viewport_height;
-    float viewport_width;
-    point3 cam_pos;
-    vec3 v_u, v_v;
-    vec3 pixel_du, pixel_dv;
-    vec3 viewport_upper_left;
-    vec3 pixel00_loc;
+    color ray_color(const ray& r, const hittable& world) const {
+        hit_record rec;
+        if (world.hit(r, interval(0, MY_INFINITY), rec)) {
+        return 0.5 * (rec.normal + color(1,1,1));
+        }
+        vec3 unit_direction = unit_vector(r.dir);
+        auto a = 0.5*(unit_direction.y() + 1.0);
+        return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+    }
 };
 
 class Application {
 public:
+    size_t image_width;
+    size_t image_height;
+    bool running;
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+    SDL_Texture* texture = nullptr;
+    Uint32* frame_buffer = nullptr;
+
     Application(size_t width, size_t height)
         : image_width(width), image_height(height), running(true) {
         if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -106,23 +112,22 @@ public:
     void run() {
         if (!running) return;
 
-        // Create camera object
+        // create camera object
         Camera camera(static_cast<float>(image_width) / image_height, image_width, image_height);
 
-        // Objects
+        // objects
         hittable_list world;
         world.add(make_shared<sphere>(point3(0, 0, -2), .5));
         world.add(make_shared<sphere>(point3(.8, 0, -2), .2));
         world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
-        // Main event loop
         SDL_Event event;
         while (running) {
             // Render each pixel
             for (size_t row = 0; row < image_height; row++) {
                 for (size_t col = 0; col < image_width; col++) {
                     ray r = camera.get_ray(col, row);
-                    color pixel_color = ray_color(r, world);
+                    color pixel_color = camera.ray_color(r, world);
 
                     int red = static_cast<int>(pixel_color.x() * 255.999);
                     int green = static_cast<int>(pixel_color.y() * 255.999);
@@ -141,9 +146,14 @@ public:
 
             // Handle events
             while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_KEYDOWN &&
-                    event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-                    running = false;
+                if (event.type == SDL_KEYDOWN) {
+                    switch (event.key.keysym.scancode) {
+                        case SDL_SCANCODE_ESCAPE:
+                            running = false;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
 
@@ -153,15 +163,6 @@ public:
             SDL_RenderPresent(renderer);
         }
     }
-
-private:
-    size_t image_width;
-    size_t image_height;
-    bool running;
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
-    SDL_Texture* texture = nullptr;
-    Uint32* frame_buffer = nullptr;
 };
 
 int main() {
