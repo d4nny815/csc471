@@ -58,6 +58,9 @@ public:
 	shared_ptr<Texture> texture0;
 	shared_ptr<Texture> texture1;	
 	shared_ptr<Texture> texture2;
+	shared_ptr<Texture> crate;
+	shared_ptr<Texture> world;
+	shared_ptr<Texture> wood;
 
 	//animation data
 	float lightTrans = 0;
@@ -212,7 +215,7 @@ public:
   		texture0->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
   		texture1 = make_shared<Texture>();
-  		texture1->setFilename(resourceDirectory + "/skybox/back.jpg");
+  		texture1->setFilename(resourceDirectory + "/skybox/right.jpg");
   		texture1->init();
   		texture1->setUnit(1);
   		texture1->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -222,6 +225,26 @@ public:
   		texture2->init();
   		texture2->setUnit(2);
   		texture2->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+		crate = make_shared<Texture>();
+  		crate->setFilename(resourceDirectory + "/crate.jpg");
+  		crate->init();
+  		crate->setUnit(3);
+		crate->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+		wood = make_shared<Texture>();
+  		wood->setFilename(resourceDirectory + "/cartoonWood.jpg");
+  		wood->init();
+  		wood->setUnit(3);
+		wood->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+		world = make_shared<Texture>();
+  		world->setFilename(resourceDirectory + "/world.jpg");
+  		world->init();
+  		world->setUnit(3);
+		world->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+
 
   		// init splines up and down
        splinepath[0] = Spline(glm::vec3(-6,0,5), glm::vec3(-1,-5,5), glm::vec3(1, 5, 5), glm::vec3(2,0,5), 5);
@@ -466,27 +489,49 @@ public:
 		glUniform1i(texProg->getUniform("flip"), 0);
 		texture1->bind(texProg->getUniform("Texture0"));
 		Model->pushMatrix();
-			Model->loadIdentity();
-			Model->scale(vec3(8.0));
-			setModel(texProg, Model);
-			sphere->draw(texProg);
+		Model->loadIdentity();
+		Model->scale(vec3(8.0));
+		setModel(texProg, Model);
+		sphere->draw(texProg);
 		Model->popMatrix();
 
 		glUniform1i(texProg->getUniform("flip"), 1);
+		
+		Model->pushMatrix();
+		world->bind(texProg->getUniform("Texture0"));
+		Model->scale(.7);
+		Model->translate(vec3(0, 1, -5));
+		setModel(texProg, Model);
+		sphere->draw(texProg);
+
+		wood->bind(texProg->getUniform("Texture0"));
+		Model->translate(vec3(0, 1, 0));
+		Model->scale(.5);
+		setModel(texProg, Model);
+		sphere->draw(texProg);
+		
+		crate->bind(texProg->getUniform("Texture0"));
+		Model->translate(vec3(0, 1, 0));
+		Model->scale(.5);
+		setModel(texProg, Model);
+		sphere->draw(texProg);
+
+		Model->popMatrix();
+		
 		drawGround(texProg);
 
 		texProg->unbind();
 
-		//use the material shader
-		prog->bind();
-		//set up all the matrices
-		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
-		SetView(prog);
-		glUniform3f(prog->getUniform("lightPos"), 2.0+lightTrans, 2.0, 2.9);
-		//draw the waving HM
-		SetMaterial(prog, 1);
-		drawHierModel(Model, prog);
-		prog->unbind();
+		// //use the material shader
+		// prog->bind();
+		// //set up all the matrices
+		// glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, value_ptr(Projection->topMatrix()));
+		// SetView(prog);
+		// glUniform3f(prog->getUniform("lightPos"), 2.0+lightTrans, 2.0, 2.9);
+		// //draw the waving HM
+		// SetMaterial(prog, 1);
+		// drawHierModel(Model, prog);
+		// prog->unbind();
 
 		// Pop matrix stacks.
 		Projection->popMatrix();
