@@ -247,8 +247,10 @@ public:
 
 
   		// init splines up and down
-       splinepath[0] = Spline(glm::vec3(-6,0,5), glm::vec3(-1,-5,5), glm::vec3(1, 5, 5), glm::vec3(2,0,5), 5);
-       splinepath[1] = Spline(glm::vec3(2,0,5), glm::vec3(3,-2,5), glm::vec3(-0.25, 0.25, 5), glm::vec3(0,0,5), 5);
+		const int BOX_SPACE = 5;
+       	splinepath[0] = Spline(glm::vec3(-BOX_SPACE,0,BOX_SPACE), glm::vec3(BOX_SPACE, 0, BOX_SPACE), 
+	   		glm::vec3(BOX_SPACE, 0, -BOX_SPACE), glm::vec3(-BOX_SPACE, 3, -BOX_SPACE), 6);
+       	splinepath[1] = Spline(glm::vec3(-BOX_SPACE, 3, -BOX_SPACE), glm::vec3(3,-2,5), glm::vec3(-0.25, 0.25, 5), glm::vec3(0,0,0), 5);
     
 	}
 
