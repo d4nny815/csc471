@@ -68,12 +68,49 @@ public:
 	vec3 strafe = vec3(1, 0, 0);
 	vec3 g_eye = vec3(0, 1, 0);
 	vec3 g_lookAt = vec3(0, 1, -4);
+	const vec3 UP_VEC = vec3(0, 1, 0);
+	const float MOUSE_SENS = .1;
+	const float MOVEMENT_SENS = .5;
+	const double MAX_YVIEW_ANG = M_PI_2 * 80 / 90;
 
 	Spline splinepath[2];
 	bool goCamera = false;
 
+	void update_camera() {
+		// calc new viewing point
+		view.x = cos(g_theta) * cos(g_phi);
+    	view.y = sin(g_phi); 
+    	view.z = sin(g_theta) * cos(g_phi);
+    	view = normalize(view);
+
+		// strafe is orthogonal to view and up
+    	strafe = normalize(cross(view, UP_VEC)); 
+
+    	g_lookAt = g_eye + view;
+	}
+
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
+		
+		if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+			g_eye += view * MOVEMENT_SENS;
+			update_camera();
+		}
+		if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+			g_eye -= view * MOVEMENT_SENS;
+			update_camera();
+		}
+
+		if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+			g_eye -= strafe * MOVEMENT_SENS;
+			update_camera();
+		}
+
+		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+			g_eye += strafe * MOVEMENT_SENS;
+			update_camera();
+		}
+
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -103,11 +140,19 @@ public:
 		}
 	}
 
-
 	void scrollCallback(GLFWwindow* window, double deltaX, double deltaY) {
-   		cout << "xDel + yDel " << deltaX << " " << deltaY << endl;
-   		//fill in for game camera
+		g_theta += deltaX * MOUSE_SENS;
+    	g_phi += deltaY * MOUSE_SENS;
+    	g_phi = clamp(g_phi, -MAX_YVIEW_ANG, MAX_YVIEW_ANG);
+
+    	update_camera();
 	}
+
+	/* camera controls - do not change */
+	void SetView(shared_ptr<Program>  shader) {
+		glm::mat4 Cam = glm::lookAt(g_eye, g_lookAt, vec3(0, 1, 0));
+		glUniformMatrix4fv(shader->getUniform("V"), 1, GL_FALSE, value_ptr(Cam));
+  	}
 
 	void resizeCallback(GLFWwindow *window, int width, int height)
 	{
@@ -167,7 +212,7 @@ public:
   		texture0->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
   		texture1 = make_shared<Texture>();
-  		texture1->setFilename(resourceDirectory + "/skyBox/back.jpg");
+  		texture1->setFilename(resourceDirectory + "/skybox/back.jpg");
   		texture1->init();
   		texture1->setUnit(1);
   		texture1->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -342,12 +387,6 @@ public:
 	void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M) {
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, value_ptr(M->topMatrix()));
    	}
-
-   	/* camera controls - do not change */
-	void SetView(shared_ptr<Program>  shader) {
-  		glm::mat4 Cam = glm::lookAt(g_eye, g_lookAt, vec3(0, 1, 0));
-  		glUniformMatrix4fv(shader->getUniform("V"), 1, GL_FALSE, value_ptr(Cam));
-	}
 
    	/* code to draw waving hierarchical model */
    	void drawHierModel(shared_ptr<MatrixStack> Model, shared_ptr<Program> prog) {

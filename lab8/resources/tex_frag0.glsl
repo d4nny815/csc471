@@ -19,14 +19,14 @@ void main() {
 	vec3 light = normalize(lightDir);
 	float dC = max(0, dot(normal, light));
 
-  vec3 halfway = normalize(-EPos);
-	float sC = max(pow(dot(halfway, normal), MatShine), 0.0);
+  vec3 halfway = normalize(-EPos) + normalize(light);
+	float sC = max(pow(dot(normalize(halfway), normal), MatShine), 0.0);
 
   //to set the out color as the texture color 
   Outcolor = dC * texColor0 + sC * texColor0;
-  if (Outcolor.b > .7) {
-    Outcolor = vec4(1, Outcolor.g * .6, 0, 1);
-  }
+  //if (Outcolor.b > .7) {
+    //Outcolor = vec4(1, Outcolor.g * .6, 0, 1);
+  //}
 
   //to set the outcolor as the texture coordinate (for debugging)
   //Outcolor = vec4(vTexCoord.s, vTexCoord.t, 0, 1);

@@ -59,22 +59,51 @@ void Shape::init()
 	CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, posBuf.size()*sizeof(float), &posBuf[0], GL_STATIC_DRAW));
 
 	// Send the normal array to the GPU
-	if (norBuf.empty())
-	{
-		norBufID = 0;
+	// Compute normals if missing
+	if (norBuf.empty()) {
+		norBuf.resize(posBuf.size(), 0.0f);
+
+		// Compute face normals and add to vertex normals
+		for (size_t i = 0; i < eleBuf.size(); i += 3) {
+			unsigned int idx0 = eleBuf[i];
+			unsigned int idx1 = eleBuf[i + 1];
+			unsigned int idx2 = eleBuf[i + 2];
+
+			glm::vec3 v0(posBuf[idx0 * 3], posBuf[idx0 * 3 + 1], posBuf[idx0 * 3 + 2]);
+			glm::vec3 v1(posBuf[idx1 * 3], posBuf[idx1 * 3 + 1], posBuf[idx1 * 3 + 2]);
+			glm::vec3 v2(posBuf[idx2 * 3], posBuf[idx2 * 3 + 1], posBuf[idx2 * 3 + 2]);
+
+			// TODO: need to change shader for neg normals
+			glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+
+			for (int j = 0; j < 3; ++j) {
+				norBuf[idx0 * 3 + j] += normal[j];
+				norBuf[idx1 * 3 + j] += normal[j];
+				norBuf[idx2 * 3 + j] += normal[j];
+			}
+		}
+
+		// Normalize the vertex normals
+		for (size_t i = 0; i < norBuf.size(); i += 3) {
+			glm::vec3 n(norBuf[i], norBuf[i + 1], norBuf[i + 2]);
+			if (glm::length(n) > 0) {
+				n = glm::normalize(n);
+			}
+			norBuf[i] = n.x;
+			norBuf[i + 1] = n.y;
+			norBuf[i + 2] = n.z;
+		}
 	}
-	else
-	{
-		CHECKED_GL_CALL(glGenBuffers(1, &norBufID));
-		CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, norBufID));
-		CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, norBuf.size()*sizeof(float), &norBuf[0], GL_STATIC_DRAW));
-	}
+
+	// Send the normal array to the GPU
+	CHECKED_GL_CALL(glGenBuffers(1, &norBufID));
+	CHECKED_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, norBufID));
+	CHECKED_GL_CALL(glBufferData(GL_ARRAY_BUFFER, norBuf.size() * sizeof(float), norBuf.data(), GL_STATIC_DRAW));
 
 	// Send the texture array to the GPU
 	if (texBuf.empty())
 	{
 		texBufID = 0;
-		cout << "warning no textures!" << endl;
 	}
 	else
 	{

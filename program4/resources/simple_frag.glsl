@@ -16,7 +16,13 @@ in vec3 EPos;
 void main()
 {
 	vec3 normal = normalize(fragNor);
+	// if (flip < 1) normal = -normal;
+
 	vec3 light = normalize(lightDir);
 	float dC = max(0, dot(normal, light));
-	color = vec4(MatAmb + dC*MatDif, 1.0);
+
+  	vec3 halfway = normalize(-EPos) + normalize(light);
+	float sC = max(pow(dot(normalize(halfway), normal), MatShine), 0.0);
+
+	color = vec4(MatAmb + dC * MatDif + sC * MatSpec, 1.0);
 }
