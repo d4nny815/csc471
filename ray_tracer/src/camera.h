@@ -34,4 +34,6 @@ public:
 
 };
 
+inline float linear_to_gamma(float linear_comp);
+
 #endif /* camera.h */

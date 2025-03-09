@@ -44,14 +44,13 @@ ray Camera::get_ray(size_t col, size_t row) {
 color Camera::ray_color(const ray& r, const size_t depth, const hittable& world) 
     const {
     
+    const float GAMMA = 0.5f;
     if (depth <= 0) return color(0,0,0);
     
     hit_record rec;
     if (world.hit(r, interval(0.001, MY_INFINITY), rec)) {
-        // shoot child rays and see if they hit anything
-        vec3 direction = random_on_hemisphere(rec.normal);
-        return 0.5 * ray_color(ray(rec.point, direction), depth - 1, world);
-        // return 0.5 * (rec.normal + color(1,1,1));
+        vec3 direction = rec.normal + random_unit_vector();
+        return GAMMA * ray_color(ray(rec.point, direction), depth - 1, world);
     }
 
     vec3 unit_direction = unit_vector(r.dir);
@@ -83,10 +82,17 @@ void Camera::render(const hittable& world) {
 void Camera::write_color(color k) {
     static const interval color_int(0, .999); 
 
-    int red = int(256 * color_int.clamp(k.x()));
-    int green = int(256 * color_int.clamp(k.y()));
-    int blue = int(256 * color_int.clamp(k.z()));
+    float r = linear_to_gamma(k.x());
+    float g = linear_to_gamma(k.y());
+    float b = linear_to_gamma(k.z());
+
+    int red = int(256 * color_int.clamp(r));
+    int green = int(256 * color_int.clamp(g));
+    int blue = int(256 * color_int.clamp(b));
 
     printf("%d %d %d\n", red, green, blue);
 }
- 
+
+inline float linear_to_gamma(float linear_comp) {
+    return linear_comp > 0 ? std::sqrt(linear_comp) : 0;
+}
