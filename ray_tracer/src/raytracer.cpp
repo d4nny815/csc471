@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <SDL2/SDL.h>
+#include <chrono>
 
 #include "primatives.h"
 #include "util.h"
@@ -13,6 +14,9 @@
 #define WHITE   (color(1, 1, 1))
 #define BLACK   (color(0, 0, 0))
 
+using namespace std::chrono::_V2;
+
+
 class Application {
 public:
     size_t image_width;
@@ -22,6 +26,9 @@ public:
     SDL_Renderer* renderer = nullptr;
     SDL_Texture* texture = nullptr;
     Uint32* frame_buffer = nullptr;
+
+    // volatile size_t frame_cnt = 0;
+    system_clock::time_point prev_tick, cur_tick;
 
     Application(size_t width, size_t height)
         : image_width(width), image_height(height), running(true) {
@@ -70,12 +77,24 @@ public:
 
         // objects
         hittable_list world;
-        world.add(make_shared<sphere>(point3(0, 0, -2), .5));
-        world.add(make_shared<sphere>(point3(.8, 0, -2), .2));
+        world.add(make_shared<sphere>(point3(0, 0, -1), .5));
+        world.add(make_shared<sphere>(point3(.8, 0, -1), .2));
         world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
+
+
+        system_clock::time_point prev_tick;
+        system_clock::time_point cur_tick;
+        prev_tick = system_clock::now();
 
         SDL_Event event;
         while (running) {
+            cur_tick = system_clock::now();
+            auto elapsed = cur_tick - prev_tick;
+            prev_tick = cur_tick;
+            double fps = 1e9 / elapsed.count();
+            fprintf(stderr, "\rFPS: %.4lf        ", fps);
+            fflush(stderr);
+
             for (size_t row = 0; row < image_height; row++) {
                 for (size_t col = 0; col < image_width; col++) {
                     ray r = camera.get_ray(col, row);
@@ -102,6 +121,12 @@ public:
                     switch (event.key.keysym.scancode) {
                         case SDL_SCANCODE_ESCAPE:
                             running = false;
+                            break;
+                        case SDL_SCANCODE_W:
+                            camera.pos.data[2] -= .2;
+                            break;
+                        case SDL_SCANCODE_S:
+                            camera.pos.data[2] += .2;
                             break;
                         default:
                             break;

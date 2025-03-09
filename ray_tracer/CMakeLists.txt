@@ -16,10 +16,14 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # OS-specific options and libraries
 message(STATUS "Adding GCC style compiler flags")
-add_compile_options("-Wall" "-pedantic" "-Werror=return-type")
+set(COMPILE_FLAGS "-Wall -pedantic -Werror=return-type -O3")
+set(LINK_FLAGS "")
 
+set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS}")
+set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
+
+# SDL for window manager
 find_package(SDL2 REQUIRED)
-
 if(SDL2_FOUND)
     message(STATUS "SDL2 found: ${SDL2_INCLUDE_DIRS}")
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})

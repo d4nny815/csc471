@@ -8,7 +8,7 @@ public:
     float focal_length;
     float viewport_height;
     float viewport_width;
-    point3 cam_pos;
+    point3 pos;
     vec3 v_u, v_v;
     vec3 pixel_du, pixel_dv;
     vec3 viewport_upper_left;
@@ -18,6 +18,7 @@ public:
 
     ray get_ray(size_t col, size_t row);
     color ray_color(const ray& r, const hittable& world) const;
+
 };
 
 #endif /* camera.h */
