@@ -18,6 +18,7 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS})
 message(STATUS "Adding GCC style compiler flags")
 add_compile_options("-Wall")
 add_compile_options("-pedantic")
+add_compile_options("-Winline")
 add_compile_options("-Werror=return-type")
 add_compile_options("-g")
 

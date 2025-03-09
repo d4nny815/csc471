@@ -10,7 +10,7 @@ class vec3 {
 public:
     float data[3];
 
-    vec3() : data{0, 0, 0} {}; // default constructor
+    vec3() : data{0, 0, 0} {};
     vec3(float a, float b, float c) : data{a, b, c} {};
 
     // getters
@@ -19,17 +19,23 @@ public:
     float z() const { return data[2]; }
 
     // operator overloading
-    vec3 operator-() const;
-    float operator[](int i) const;
-    float& operator[](int i);
+    inline vec3 operator-() const;
+    inline float operator[](int i) const;
+    inline float& operator[](int i);
     vec3& operator+=(const vec3& v);
-    vec3& operator*=(float t);
-    vec3& operator/=(float t);
-    float length() const;
-    float length_squared() const;
+    inline vec3& operator*=(float t);
+    inline vec3& operator/=(float t);
+    inline float length() const;
+    inline float length_squared() const;
 
     static vec3 random();
     static vec3 random(float min, float max);
+
+    bool near_zero() const {
+        auto s = 1e-8;
+        return (std::fabs(data[0]) < s) && (std::fabs(data[1]) < s) && 
+            (std::fabs(data[2]) < s);
+    }
     
     inline void print(FILE* fp) {
         fprintf(fp, "<%f, %f, %f>\n", data[0], data[1], data[2]);
@@ -38,6 +44,7 @@ public:
 
 vec3 operator+(const vec3& u, const vec3& v); 
 vec3 operator-(const vec3& u, const vec3& v);
+vec3 operator*(const vec3& v, const vec3& u);
 vec3 operator*(float t, const vec3& v);
 vec3 operator*(const vec3& v, float t);
 vec3 operator/(const vec3& v, float t);
@@ -46,6 +53,7 @@ vec3 cross(const vec3& u, const vec3& v);
 vec3 unit_vector(const vec3& v);
 vec3 random_unit_vector();
 vec3 random_on_hemisphere(const vec3& normal);
+vec3 reflect(const vec3& v, const vec3& n);
 
 using point3 = vec3; // alias for coords
 
@@ -66,11 +74,14 @@ public:
 
 };
 
+class material;
 class hit_record {
 public:
     point3 point;
     vec3 normal;
     float t;
+    shared_ptr<material> mat;
+
 };
 
 class hittable {
@@ -84,10 +95,11 @@ class sphere : public hittable {
 public: 
     point3 center;
     float radius;
+    shared_ptr<material> mat;
 
     sphere() : center(0, 0, 0), radius(1.0) {}
-    sphere(const point3& center, double radius) : 
-        center(center), radius(std::fmax(0,radius)) {}
+    sphere(const point3& center, double radius, shared_ptr<material> mat) : 
+        center(center), radius(std::fmax(0,radius)), mat(mat) {}
 
     bool hit(const ray& r, interval t, hit_record& hr) const override;
 };

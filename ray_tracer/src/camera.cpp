@@ -1,5 +1,5 @@
 #include "camera.h"
-
+#include "material.h"
 
 Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
     size_t child_rays) : samples_per_pixel(samples_per_pixel), 
@@ -35,7 +35,6 @@ ray Camera::get_ray(size_t col, size_t row) {
     vec3 pixel_sample = pixel00_loc + ((col + offset.x()) * pixel_du) +
         ((row + offset.y()) * pixel_dv);
     
-    // vec3 ray_origin = pos;
     vec3 ray_dir = pixel_sample - pos;
 
     return ray(pos, ray_dir);
@@ -49,8 +48,11 @@ color Camera::ray_color(const ray& r, const size_t depth, const hittable& world)
     
     hit_record rec;
     if (world.hit(r, interval(0.001, MY_INFINITY), rec)) {
-        vec3 direction = rec.normal + random_unit_vector();
-        return GAMMA * ray_color(ray(rec.point, direction), depth - 1, world);
+        ray scattered;
+        color attenuation;
+        if (rec.mat->scatter(r, rec, attenuation, scattered))         
+            return attenuation * ray_color(scattered, depth - 1, world);
+        return color(0, 0, 0);
     }
 
     vec3 unit_direction = unit_vector(r.dir);

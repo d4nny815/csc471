@@ -5,15 +5,15 @@
 //* vec3
 //*============================================================================
 
-vec3 vec3::operator-() const {
+inline vec3 vec3::operator-() const {
     return vec3(-data[0], -data[1], -data[2]);
 }
 
-float vec3::operator[](int i) const {
+inline float vec3::operator[](int i) const {
     return data[i];
 }
 
-float& vec3::operator[](int i) {
+inline float& vec3::operator[](int i) {
     return data[i];
 }
 
@@ -24,25 +24,25 @@ vec3& vec3::operator+=(const vec3& v) {
     return *this;
 }
 
-vec3& vec3::operator*=(float t) {
+inline vec3& vec3::operator*=(float t) {
     data[0] *= t;
     data[1] *= t;
     data[2] *= t;
     return *this;
 }
 
-vec3& vec3::operator/=(float t) {
+inline vec3& vec3::operator/=(float t) {
     data[0] /= t;
     data[1] /= t;
     data[2] /= t;
     return *this;
 }
 
-float vec3::length() const {
+inline float vec3::length() const {
     return std::sqrt(length_squared());
 }
 
-float vec3::length_squared() const {
+inline float vec3::length_squared() const {
     return data[0] * data[0] + data[1] * data[1] + data[2] * data[2]; 
 }
 
@@ -111,6 +111,10 @@ vec3 random_on_hemisphere(const vec3& normal) {
     }
 }
 
+vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2 * dot(v, n) * n;
+}
+
 //*============================================================================
 //* color
 //*============================================================================
@@ -161,6 +165,7 @@ bool sphere::hit(const ray& r, interval t, hit_record& hr) const {
     hr.t = root;
     hr.point = r.at(root);
     hr.normal = (hr.point - center) / radius;
+    hr.mat = mat;
 
     return true; 
 }
