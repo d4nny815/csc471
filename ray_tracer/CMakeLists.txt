@@ -19,5 +19,5 @@ message(STATUS "Adding GCC style compiler flags")
 add_compile_options("-Wall")
 add_compile_options("-pedantic")
 add_compile_options("-Werror=return-type")
-add_compile_options("-O3")
+add_compile_options("-g")
 

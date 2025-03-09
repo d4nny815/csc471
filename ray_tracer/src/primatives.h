@@ -27,6 +27,9 @@ public:
     vec3& operator/=(float t);
     float length() const;
     float length_squared() const;
+
+    static vec3 random();
+    static vec3 random(float min, float max);
     
     inline void print(FILE* fp) {
         fprintf(fp, "<%f, %f, %f>\n", data[0], data[1], data[2]);
@@ -41,6 +44,8 @@ vec3 operator/(const vec3& v, float t);
 float dot(const vec3& u, const vec3& v);
 vec3 cross(const vec3& u, const vec3& v);
 vec3 unit_vector(const vec3& v);
+vec3 random_unit_vector();
+vec3 random_on_hemisphere(const vec3& normal);
 
 using point3 = vec3; // alias for coords
 

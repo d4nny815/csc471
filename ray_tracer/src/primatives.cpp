@@ -46,6 +46,14 @@ float vec3::length_squared() const {
     return data[0] * data[0] + data[1] * data[1] + data[2] * data[2]; 
 }
 
+vec3 vec3::random() {
+    return vec3(rand_float(), rand_float(), rand_float());
+}
+
+vec3 vec3::random(float min, float max) {
+    return vec3(rand_float(min,max), rand_float(min,max), rand_float(min,max));
+}
+
 vec3 operator+(const vec3& u, const vec3& v) {
     return vec3(u.data[0] + v.data[0], u.data[1] + v.data[1], u.data[2] + v.data[2]);
 }
@@ -84,6 +92,23 @@ vec3 cross(const vec3& u, const vec3& v) {
 
 vec3 unit_vector(const vec3& v) {
     return v / v.length();
+}
+
+vec3 random_unit_vector() {
+    while (true) {
+        auto p = vec3::random(-1,1);
+        auto lensq = p.length_squared();
+        if (1e-20 < lensq && lensq <= 1) return p / sqrt(lensq);
+    }
+}
+
+vec3 random_on_hemisphere(const vec3& normal) {
+    vec3 on_unit_sphere = random_unit_vector();
+    if (dot(on_unit_sphere, normal) > 0.0) {
+        return on_unit_sphere;
+    } else {
+        return -on_unit_sphere;
+    }
 }
 
 //*============================================================================
