@@ -1,11 +1,12 @@
 #include "camera.h"
 
 
-Camera::Camera(float aspect_ratio, size_t image_width, size_t image_height,
-    size_t sample_per_pixel) {
+Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel) :
+    samples_per_pixel(samples_per_pixel), aspect_ratio(aspect_ratio), image_width(image_width) {
     
-    sample_per_pixel = sample_per_pixel;
-    scale_per_pixel = 1.0 / sample_per_pixel;
+    image_height = static_cast<size_t>(image_width / aspect_ratio);
+
+    scale_per_pixel = 1.0 / samples_per_pixel;
     
     focal_length = 1.0f;
     viewport_height = 2.0f;
@@ -24,6 +25,8 @@ Camera::Camera(float aspect_ratio, size_t image_width, size_t image_height,
     viewport_upper_left = pos - vec3(0, 0, focal_length);
     viewport_upper_left = viewport_upper_left - v_u / 2 - v_v / 2;
     pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
+
+    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 }
 
 ray Camera::get_ray(size_t col, size_t row) {
@@ -50,5 +53,32 @@ color Camera::ray_color(const ray& r, const hittable& world) const {
 
 vec3 Camera::sample_square() {
     return vec3(rand_float() - 0.5, rand_float() - 0.5, 0);
+}
+
+void Camera::render(const hittable& world) {
+    for (size_t row = 0; row < image_height; row++) {
+        fprintf(stderr, "\rScanlines remaining: %zu    ", (image_height - row));
+        fflush(stderr);
+        for (size_t col = 0; col < image_width; col++) {
+            color pixel_color = color(0, 0, 0); 
+            
+            for (auto i = 0; i < samples_per_pixel; i++) {
+                ray r = get_ray(col, row);
+                pixel_color += ray_color(r, world);
+            }
+            write_color(pixel_color * scale_per_pixel);                    
+        }
+    }
+    fprintf(stderr, "\rDone                    \n");
+}
+
+void Camera::write_color(color k) {
+    static const interval color_int(0, .999); 
+
+    int red = int(256 * color_int.clamp(k.x()));
+    int green = int(256 * color_int.clamp(k.y()));
+    int blue = int(256 * color_int.clamp(k.z()));
+
+    printf("%d %d %d\n", red, green, blue);
 }
  

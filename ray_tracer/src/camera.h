@@ -14,15 +14,21 @@ public:
     vec3 viewport_upper_left;
     vec3 pixel00_loc;
 
-    size_t sample_per_pixel;
+    size_t image_width;
+    size_t image_height;
+    float aspect_ratio;
+    size_t samples_per_pixel;
     float scale_per_pixel;
 
-    Camera(float aspect_ratio, size_t image_width, size_t image_height, 
-        size_t sample_per_pixel);
+    Camera(float aspect_ratio, size_t image_width, size_t sample_per_pixel);
 
     ray get_ray(size_t col, size_t row);
     color ray_color(const ray& r, const hittable& world) const;
     vec3 sample_square();
+
+    void render(const hittable& world);
+
+    void write_color(color k);
 
 };
 
