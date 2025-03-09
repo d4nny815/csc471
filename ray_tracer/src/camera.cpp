@@ -1,8 +1,12 @@
 #include "camera.h"
 
 
-
-Camera::Camera(float aspect_ratio, size_t image_width, size_t image_height) {
+Camera::Camera(float aspect_ratio, size_t image_width, size_t image_height,
+    size_t sample_per_pixel) {
+    
+    sample_per_pixel = sample_per_pixel;
+    scale_per_pixel = 1.0 / sample_per_pixel;
+    
     focal_length = 1.0f;
     viewport_height = 2.0f;
     viewport_width = viewport_height * aspect_ratio;
@@ -23,8 +27,13 @@ Camera::Camera(float aspect_ratio, size_t image_width, size_t image_height) {
 }
 
 ray Camera::get_ray(size_t col, size_t row) {
-    vec3 pixel_center = pixel00_loc + (col * pixel_du) + (row * pixel_dv);
-    vec3 ray_dir = pixel_center - pos;
+    vec3 offset = sample_square();
+    vec3 pixel_sample = pixel00_loc + ((col + offset.x()) * pixel_du) +
+        ((row + offset.y()) * pixel_dv);
+    
+    // vec3 ray_origin = pos;
+    vec3 ray_dir = pixel_sample - pos;
+
     return ray(pos, ray_dir);
 }
 
@@ -36,6 +45,10 @@ color Camera::ray_color(const ray& r, const hittable& world) const {
 
     vec3 unit_direction = unit_vector(r.dir);
     auto a = 0.5*(unit_direction.y() + 1.0);
-    return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+    return ((1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0));
 }
 
+vec3 Camera::sample_square() {
+    return vec3(rand_float() - 0.5, rand_float() - 0.5, 0);
+}
+ 

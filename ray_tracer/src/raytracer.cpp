@@ -7,6 +7,7 @@
 #include "primatives.h"
 #include "util.h"
 #include "camera.h"
+#include "interval.h"
 
 #define RED     (color(1, 0, 0))
 #define GREEN   (color(0, 1, 0))
@@ -26,9 +27,12 @@ public:
     SDL_Renderer* renderer = nullptr;
     SDL_Texture* texture = nullptr;
     Uint32* frame_buffer = nullptr;
-
-    // volatile size_t frame_cnt = 0;
     system_clock::time_point prev_tick, cur_tick;
+
+    // ray tracer components
+    int samples_per_pixel = 5;
+    float scale_per_pixel = 1.0 / samples_per_pixel;
+
 
     Application(size_t width, size_t height)
         : image_width(width), image_height(height), running(true) {
@@ -73,7 +77,7 @@ public:
         if (!running) return;
 
         Camera camera(static_cast<float>(image_width) / image_height
-            , image_width, image_height);
+            , image_width, image_height, 10);
 
         // objects
         hittable_list world;
@@ -97,18 +101,14 @@ public:
 
             for (size_t row = 0; row < image_height; row++) {
                 for (size_t col = 0; col < image_width; col++) {
-                    ray r = camera.get_ray(col, row);
-                    color pixel_color = camera.ray_color(r, world);
+                    color pixel_color = color(0, 0, 0); 
+                    
+                    for (auto i = 0; i < samples_per_pixel; i++) {
+                        ray r = camera.get_ray(col, row);
+                        pixel_color += camera.ray_color(r, world);
+                    }
 
-                    int red = static_cast<int>(pixel_color.x() * 255.999);
-                    int green = static_cast<int>(pixel_color.y() * 255.999);
-                    int blue = static_cast<int>(pixel_color.z() * 255.999);
-
-                    SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
-                    Uint32 color = SDL_MapRGB(format, red, green, blue);
-                    SDL_FreeFormat(format);
-
-                    frame_buffer[row * image_width + col] = color;
+                    write_color(pixel_color * scale_per_pixel, row, col);                    
                 }
             }
 
@@ -139,6 +139,20 @@ public:
             SDL_RenderCopy(renderer, texture, NULL, NULL);
             SDL_RenderPresent(renderer);
         }
+    }
+
+    void write_color(color k, size_t row, size_t col) {
+        static const interval color_int(0, .999); 
+
+        int red = int(256 * color_int.clamp(k.x()));
+        int green = int(256 * color_int.clamp(k.y()));
+        int blue = int(256 * color_int.clamp(k.z()));
+
+        SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
+        Uint32 color = SDL_MapRGB(format, red, green, blue);
+        SDL_FreeFormat(format);
+
+        frame_buffer[row * image_width + col] = color;
     }
 };
 
