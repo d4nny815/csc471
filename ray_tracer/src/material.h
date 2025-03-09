@@ -27,8 +27,9 @@ public:
 class metal : public material {
 public:
     color albedo;
+    float fuzz;
     
-    metal(const color& albedo) : albedo(albedo) {}
+    metal(const color& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
     bool scatter(const ray& r, const hit_record& hr, color& attenuation, 
         ray& scattered) const;
 };
