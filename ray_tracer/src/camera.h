@@ -2,6 +2,8 @@
 #define CAMERA_H
 
 #include "primatives.h"
+#include "material.h"
+#include "object.h"
 
 class Camera {
 public:

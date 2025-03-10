@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "util.h"
 #include "interval.h"
+#include <cmath>
+
 
 // * vec3
 class vec3 {
@@ -19,14 +21,14 @@ public:
     float z() const { return data[2]; }
 
     // operator overloading
-    inline vec3 operator-() const;
-    inline float operator[](int i) const;
-    inline float& operator[](int i);
+    vec3 operator-() const;
+    float operator[](int i) const;
+    float& operator[](int i);
     vec3& operator+=(const vec3& v);
-    inline vec3& operator*=(float t);
-    inline vec3& operator/=(float t);
-    inline float length() const;
-    inline float length_squared() const;
+    vec3& operator*=(float t);
+    vec3& operator/=(float t);
+    float length() const;
+    float length_squared() const;
 
     static vec3 random();
     static vec3 random(float min, float max);
@@ -59,7 +61,6 @@ using point3 = vec3; // alias for coords
 
 // * Color
 using color = vec3; // alias for colors
-void write_color(FILE* fp, const color& c);
 
 class ray {
 public:
@@ -73,50 +74,5 @@ public:
     point3 at(float t) const;
 
 };
-
-class material;
-class hit_record {
-public:
-    point3 point;
-    vec3 normal;
-    float t;
-    shared_ptr<material> mat;
-
-};
-
-class hittable {
-public:
-    virtual ~hittable() = default;
-
-    virtual bool hit(const ray& r, interval t, hit_record& hr) const = 0;
-};
-
-class sphere : public hittable {
-public: 
-    point3 center;
-    float radius;
-    shared_ptr<material> mat;
-
-    sphere() : center(0, 0, 0), radius(1.0) {}
-    sphere(const point3& center, double radius, shared_ptr<material> mat) : 
-        center(center), radius(std::fmax(0,radius)), mat(mat) {}
-
-    bool hit(const ray& r, interval t, hit_record& hr) const override;
-};
-
-class hittable_list : public hittable {
-public:
-    std::vector<shared_ptr<hittable>> objects;
-
-    hittable_list() {}
-    hittable_list(shared_ptr<hittable> object);
-
-    void clear();
-    void add(shared_ptr<hittable> object);
-    bool hit(const ray& r, interval t, hit_record& hr) const override;
-
-};
-
-
 
 #endif /* primatives.h */

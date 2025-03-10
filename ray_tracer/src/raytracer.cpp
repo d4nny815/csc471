@@ -1,14 +1,12 @@
-#include <stdio.h>
-#include <iostream>
-#include <cmath>
-#include <SDL2/SDL.h>
-#include <chrono>
+#include <cstdio>
 
 #include "primatives.h"
-#include "util.h"
 #include "camera.h"
-#include "interval.h"
 #include "material.h"
+#include "geometry.h"
+#include "interval.h"
+#include "object.h"
+#include "util.h"
 
 int main() {
     const size_t image_width = 900;

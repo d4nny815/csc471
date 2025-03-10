@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include "primatives.h"
+#include "object.h"
 
 class material {
 public:

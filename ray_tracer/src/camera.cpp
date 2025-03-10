@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "material.h"
 
 Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
     size_t child_rays) : samples_per_pixel(samples_per_pixel), 
