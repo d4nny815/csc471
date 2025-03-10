@@ -12,7 +12,7 @@ int main() {
     const size_t image_width = 900;
     const float aspect_ratio = 3.0f / 2.0f;
 
-    Camera cam(aspect_ratio, image_width, 10, 20);
+    Camera cam(aspect_ratio, image_width, 10, 5);
 
     HittableList world;
     auto Material_ground = make_shared<Lamertian>(Color(.7, .7, .1));

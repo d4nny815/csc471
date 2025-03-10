@@ -27,10 +27,11 @@ public:
         size_t child_rays);
 
     Ray get_ray(size_t col, size_t row);
-    Color ray_color(const Ray& r, const size_t depth, const Hittable& world) const;
-    vec3 sample_square();
+    Color ray_color(const Ray& r, const size_t depth, const HittableList& world) 
+        const;
+    inline vec3 sample_square();
 
-    void render(const Hittable& world);
+    void render(const HittableList& world);
 
     void write_color(Color k);
 

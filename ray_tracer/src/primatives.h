@@ -62,6 +62,11 @@ using point3 = vec3; // alias for coords
 
 // * Color
 using Color = vec3; // alias for colors
+const Color BLACK = Color(0, 0, 0); 
+const Color WHITE = Color(1, 1, 1); 
+const Color RED   = Color(1, 0, 0); 
+const Color GREEN = Color(0, 1, 0); 
+const Color BLUE  = Color(0, 0, 1); 
 
 class Ray {
 public:
@@ -75,5 +80,6 @@ public:
     point3 at(float t) const;
 
 };
+
 
 #endif /* primatives.h */
