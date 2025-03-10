@@ -1,13 +1,11 @@
 #include "camera.h"
 
 Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
-    size_t child_rays) : samples_per_pixel(samples_per_pixel), 
-    aspect_ratio(aspect_ratio),  image_width(image_width), child_rays(child_rays) {
-    
-    image_height = static_cast<size_t>(image_width / aspect_ratio);
+    size_t child_rays) : image_width(image_width), 
+    image_height(static_cast<size_t>(image_width / aspect_ratio)),
+    aspect_ratio(aspect_ratio), samples_per_pixel(samples_per_pixel),
+    scale_per_pixel(1.0 / samples_per_pixel), child_rays(child_rays) {
 
-    scale_per_pixel = 1.0 / samples_per_pixel;
-    
     focal_length = 1.0f;
     viewport_height = 2.0f;
     viewport_width = viewport_height * aspect_ratio;
@@ -42,7 +40,6 @@ Ray Camera::get_ray(size_t col, size_t row) {
 Color Camera::ray_color(const Ray& r, const size_t depth, const Hittable& world) 
     const {
     
-    const float GAMMA = 0.5f;
     if (depth <= 0) return Color(0,0,0);
     
     HitRecord rec;
@@ -70,7 +67,7 @@ void Camera::render(const Hittable& world) {
         for (size_t col = 0; col < image_width; col++) {
             Color pixel_color = Color(0, 0, 0); 
             
-            for (auto i = 0; i < samples_per_pixel; i++) {
+            for (size_t i = 0; i < samples_per_pixel; i++) {
                 Ray r = get_ray(col, row);
                 pixel_color += ray_color(r, child_rays, world);
             }
