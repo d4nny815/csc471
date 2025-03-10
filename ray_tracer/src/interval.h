@@ -1,13 +1,13 @@
 #ifndef INTERVAL_H
 #define INTERVAL_H
 
-class interval {
+class Interval {
   public:
     float min, max;
 
-    interval() : min(+MY_INFINITY), max(-MY_INFINITY) {}
+    Interval() : min(+MY_INFINITY), max(-MY_INFINITY) {}
 
-    interval(float min, float max) : min(min), max(max) {}
+    Interval(float min, float max) : min(min), max(max) {}
 
     float size() const {
         return max - min;
@@ -27,10 +27,10 @@ class interval {
         return x;
     }
  
-    // static const interval empty, universe;
+    // static const Interval empty, universe;
 };
 
-// const interval interval::empty    = interval(+MY_INFINITY, -MY_INFINITY);
-// const interval interval::universe = interval(-MY_INFINITY, +MY_INFINITY);
+// const Interval Interval::empty    = Interval(+MY_INFINITY, -MY_INFINITY);
+// const Interval Interval::universe = Interval(-MY_INFINITY, +MY_INFINITY);
 
 #endif

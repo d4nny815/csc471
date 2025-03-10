@@ -101,12 +101,12 @@ vec3 random_unit_vector() {
     }
 }
 
-vec3 random_on_hemisphere(const vec3& normal) {
-    vec3 on_unit_sphere = random_unit_vector();
-    if (dot(on_unit_sphere, normal) > 0.0) {
-        return on_unit_sphere;
+vec3 random_on_hemiSphere(const vec3& normal) {
+    vec3 on_unit_Sphere = random_unit_vector();
+    if (dot(on_unit_Sphere, normal) > 0.0) {
+        return on_unit_Sphere;
     } else {
-        return -on_unit_sphere;
+        return -on_unit_Sphere;
     }
 }
 
@@ -118,7 +118,7 @@ vec3 reflect(const vec3& v, const vec3& n) {
 //* ray
 //*============================================================================
 
-vec3 ray::at(float t) const {
+vec3 Ray::at(float t) const {
     return origin + t * dir;
 }
 

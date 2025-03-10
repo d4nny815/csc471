@@ -4,35 +4,35 @@
 #include "primatives.h"
 #include "object.h"
 
-class material {
+class Material {
 public:
-    virtual ~material() = default;
+    virtual ~Material() = default;
 
-    virtual bool scatter(const ray& r, const hit_record& hr, color& attenuation, 
-        ray& scattered) const {
+    virtual bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+        Ray& scattered) const {
         return false;
     }
 };
 
-class diffuse : public material {
+class Lamertian : public Material {
 public:
-    color albedo;
+    Color albedo;
 
-    diffuse(const color& albedo) : albedo(albedo) {}
+    Lamertian(const Color& albedo) : albedo(albedo) {}
 
-    bool scatter(const ray& r, const hit_record& hr, color& attenuation, 
-        ray& scattered) const;
+    bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+        Ray& scattered) const;
 
 };
 
-class metal : public material {
+class Metal : public Material {
 public:
-    color albedo;
+    Color albedo;
     float fuzz;
     
-    metal(const color& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
-    bool scatter(const ray& r, const hit_record& hr, color& attenuation, 
-        ray& scattered) const;
+    Metal(const Color& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
+    bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+        Ray& scattered) const;
 };
 
 #endif /* material.h */

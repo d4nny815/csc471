@@ -50,25 +50,26 @@ vec3 operator*(const vec3& v, const vec3& u);
 vec3 operator*(float t, const vec3& v);
 vec3 operator*(const vec3& v, float t);
 vec3 operator/(const vec3& v, float t);
+
 float dot(const vec3& u, const vec3& v);
 vec3 cross(const vec3& u, const vec3& v);
 vec3 unit_vector(const vec3& v);
 vec3 random_unit_vector();
-vec3 random_on_hemisphere(const vec3& normal);
+vec3 random_on_hemiSphere(const vec3& normal);
 vec3 reflect(const vec3& v, const vec3& n);
 
 using point3 = vec3; // alias for coords
 
 // * Color
-using color = vec3; // alias for colors
+using Color = vec3; // alias for colors
 
-class ray {
+class Ray {
 public:
     point3 origin;
     vec3 dir;
 
-    ray() {}
-    ray(const vec3& origin, const vec3& direction) 
+    Ray() {}
+    Ray(const vec3& origin, const vec3& direction) 
         : origin(origin), dir(direction) {}
     
     point3 at(float t) const;

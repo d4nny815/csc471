@@ -1,26 +1,26 @@
 #include "material.h"
 
 
-bool diffuse::scatter(const ray& r, const hit_record& hr, color& attenuation, 
-    ray& scattered) const {
+bool Lamertian::scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+    Ray& scattered) const {
 
     vec3 scatter_dir = hr.normal + random_unit_vector();
     if (scatter_dir.near_zero()) {
         scatter_dir = hr.normal;
     }
     
-    scattered = ray(r.origin, scatter_dir);
+    scattered = Ray(r.origin, scatter_dir);
     attenuation = albedo;
     
     return true;
 }
 
-bool metal::scatter(const ray& r, const hit_record& hr, color& attenuation, 
-    ray& scattered) const {
+bool Metal::scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+    Ray& scattered) const {
 
     vec3 reflected = reflect(r.dir, hr.normal);
     reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
-    scattered = ray(hr.point, reflected);
+    scattered = Ray(hr.point, reflected);
     attenuation = albedo;
     return (dot(scattered.dir, hr.normal) > 0);
 }

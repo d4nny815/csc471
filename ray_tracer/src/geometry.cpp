@@ -1,10 +1,10 @@
 #include "geometry.h"
 
 //*============================================================================
-//* sphere
+//* Sphere
 //*============================================================================
 
-bool sphere::hit(const ray& r, interval t, hit_record& hr) const {
+bool Sphere::hit(const Ray& r, Interval t, HitRecord& hr) const {
     vec3 origin_2_center = center - r.origin;
     float a = r.dir.length_squared();
     float h = dot(r.dir, center - r.origin);

@@ -14,16 +14,16 @@ int main() {
 
     Camera cam(aspect_ratio, image_width, 10, 20);
 
-    hittable_list world;
-    auto material_ground = make_shared<diffuse>(color(.7, .7, .1));
-    auto material_center = make_shared<diffuse>(color(0.1, 0.2, 0.5));
-    auto material_top = make_shared<metal>(color(.8, .8, .8), 0.1);
-    auto material_right = make_shared<metal>(color(.3, .6, .3), .3);
+    HittableList world;
+    auto Material_ground = make_shared<Lamertian>(Color(.7, .7, .1));
+    auto Material_center = make_shared<Lamertian>(Color(0.1, 0.2, 0.5));
+    auto Material_top = make_shared<Metal>(Color(.8, .8, .8), 0.1);
+    auto Material_right = make_shared<Metal>(Color(.3, .6, .3), .3);
 
-    world.add(make_shared<sphere>(point3(0, 0, -1), .5, material_center));
-    world.add(make_shared<sphere>(point3(0, 1, -1), .5, material_top));
-    world.add(make_shared<sphere>(point3(.8, 0, -1), .2, material_right));
-    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
+    world.add(make_shared<Sphere>(point3(0, 0, -1), .5, Material_center));
+    world.add(make_shared<Sphere>(point3(0, 1, -1), .5, Material_top));
+    world.add(make_shared<Sphere>(point3(.8, 0, -1), .2, Material_right));
+    world.add(make_shared<Sphere>(point3(0, -100.5, -1), 100, Material_ground));
 
     cam.render(world);
 

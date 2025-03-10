@@ -3,34 +3,34 @@
 
 #include "primatives.h"
 
-class material;
+class Material;
 
-class hit_record {
+class HitRecord {
 public:
     point3 point;
     vec3 normal;
     float t;
-    shared_ptr<material> mat;
+    shared_ptr<Material> mat;
 
 };
 
-class hittable {
+class Hittable {
 public:
-    virtual ~hittable() = default;
+    virtual ~Hittable() = default;
 
-    virtual bool hit(const ray& r, interval t, hit_record& hr) const = 0;
+    virtual bool hit(const Ray& r, Interval t, HitRecord& hr) const = 0;
 };
 
-class hittable_list : public hittable {
+class HittableList : public Hittable {
 public:
-    std::vector<shared_ptr<hittable>> objects;
+    std::vector<shared_ptr<Hittable>> objects;
 
-    hittable_list() {}
-    hittable_list(shared_ptr<hittable> object);
+    HittableList() {}
+    HittableList(shared_ptr<Hittable> object);
 
     void clear();
-    void add(shared_ptr<hittable> object);
-    bool hit(const ray& r, interval t, hit_record& hr) const override;
+    void add(shared_ptr<Hittable> object);
+    bool hit(const Ray& r, Interval t, HitRecord& hr) const override;
 
 };
 

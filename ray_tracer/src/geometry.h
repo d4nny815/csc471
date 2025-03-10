@@ -5,17 +5,17 @@
 #include "material.h"
 #include "object.h"
 
-class sphere : public hittable {
+class Sphere : public Hittable {
     public: 
         point3 center;
         float radius;
-        shared_ptr<material> mat;
+        shared_ptr<Material> mat;
     
-        sphere() : center(0, 0, 0), radius(1.0) {}
-        sphere(const point3& center, double radius, shared_ptr<material> mat) : 
+        Sphere() : center(0, 0, 0), radius(1.0) {}
+        Sphere(const point3& center, double radius, shared_ptr<Material> mat) : 
             center(center), radius(std::fmax(0,radius)), mat(mat) {}
     
-        bool hit(const ray& r, interval t, hit_record& hr) const override;
+        bool hit(const Ray& r, Interval t, HitRecord& hr) const override;
     };
 
 #endif /* geometry.h */

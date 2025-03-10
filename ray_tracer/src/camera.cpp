@@ -29,49 +29,49 @@ Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 }
 
-ray Camera::get_ray(size_t col, size_t row) {
+Ray Camera::get_ray(size_t col, size_t row) {
     vec3 offset = sample_square();
     vec3 pixel_sample = pixel00_loc + ((col + offset.x()) * pixel_du) +
         ((row + offset.y()) * pixel_dv);
     
     vec3 ray_dir = pixel_sample - pos;
 
-    return ray(pos, ray_dir);
+    return Ray(pos, ray_dir);
 }
 
-color Camera::ray_color(const ray& r, const size_t depth, const hittable& world) 
+Color Camera::ray_color(const Ray& r, const size_t depth, const Hittable& world) 
     const {
     
     const float GAMMA = 0.5f;
-    if (depth <= 0) return color(0,0,0);
+    if (depth <= 0) return Color(0,0,0);
     
-    hit_record rec;
-    if (world.hit(r, interval(0.001, MY_INFINITY), rec)) {
-        ray scattered;
-        color attenuation;
+    HitRecord rec;
+    if (world.hit(r, Interval(0.001, MY_INFINITY), rec)) {
+        Ray scattered;
+        Color attenuation;
         if (rec.mat->scatter(r, rec, attenuation, scattered))         
             return attenuation * ray_color(scattered, depth - 1, world);
-        return color(0, 0, 0);
+        return Color(0, 0, 0);
     }
 
     vec3 unit_direction = unit_vector(r.dir);
     auto a = 0.5*(unit_direction.y() + 1.0);
-    return ((1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0));
+    return ((1.0-a)*Color(1.0, 1.0, 1.0) + a*Color(0.5, 0.7, 1.0));
 }
 
 vec3 Camera::sample_square() {
     return vec3(rand_float() - 0.5, rand_float() - 0.5, 0);
 }
 
-void Camera::render(const hittable& world) {
+void Camera::render(const Hittable& world) {
     for (size_t row = 0; row < image_height; row++) {
         fprintf(stderr, "\rScanlines remaining: %zu    ", (image_height - row));
         fflush(stderr);
         for (size_t col = 0; col < image_width; col++) {
-            color pixel_color = color(0, 0, 0); 
+            Color pixel_color = Color(0, 0, 0); 
             
             for (auto i = 0; i < samples_per_pixel; i++) {
-                ray r = get_ray(col, row);
+                Ray r = get_ray(col, row);
                 pixel_color += ray_color(r, child_rays, world);
             }
             write_color(pixel_color * scale_per_pixel);                    
@@ -80,8 +80,8 @@ void Camera::render(const hittable& world) {
     fprintf(stderr, "\rDone                    \n");
 }
 
-void Camera::write_color(color k) {
-    static const interval color_int(0, .999); 
+void Camera::write_color(Color k) {
+    static const Interval color_int(0, .999); 
 
     float r = linear_to_gamma(k.x());
     float g = linear_to_gamma(k.y());

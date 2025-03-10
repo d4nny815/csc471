@@ -26,13 +26,13 @@ public:
     Camera(float aspect_ratio, size_t image_width, size_t sample_per_pixel,
         size_t child_rays);
 
-    ray get_ray(size_t col, size_t row);
-    color ray_color(const ray& r, const size_t depth, const hittable& world) const;
+    Ray get_ray(size_t col, size_t row);
+    Color ray_color(const Ray& r, const size_t depth, const Hittable& world) const;
     vec3 sample_square();
 
-    void render(const hittable& world);
+    void render(const Hittable& world);
 
-    void write_color(color k);
+    void write_color(Color k);
 
 };
 

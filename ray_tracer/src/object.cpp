@@ -1,24 +1,24 @@
 #include "object.h"
 
 //*============================================================================
-//* hittable_list
+//* HittableList
 //*============================================================================
 
-void hittable_list::clear() {
+void HittableList::clear() {
     objects.clear();
 }
 
-void hittable_list::add(shared_ptr<hittable> object) {
+void HittableList::add(shared_ptr<Hittable> object) {
     objects.push_back(object);
 }
 
-bool hittable_list::hit(const ray& r, interval t, hit_record& hr) const {
+bool HittableList::hit(const Ray& r, Interval t, HitRecord& hr) const {
     bool hit_anything = false;
-    hit_record tmp_hr;
+    HitRecord tmp_hr;
     float closest_intersect = t.max;
 
     for (const auto& obj : objects) {
-        if (obj->hit(r, interval(t.min, closest_intersect), tmp_hr)) {
+        if (obj->hit(r, Interval(t.min, closest_intersect), tmp_hr)) {
             hit_anything = true;
             closest_intersect = tmp_hr.t;
             hr = tmp_hr;
