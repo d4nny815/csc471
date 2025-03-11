@@ -14,14 +14,14 @@ public:
     }
 };
 
-class Lamertian : public Material {
+class Lambertian : public Material {
 public:
     Color albedo;
 
-    Lamertian(const Color& albedo) : albedo(albedo) {}
+    Lambertian(const Color& albedo) : albedo(albedo) {}
 
     bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
-        Ray& scattered) const;
+        Ray& scattered) const override;
 
 };
 
@@ -32,7 +32,8 @@ public:
     
     Metal(const Color& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
     bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
-        Ray& scattered) const;
+        Ray& scattered) const override;
 };
+
 
 #endif /* material.h */

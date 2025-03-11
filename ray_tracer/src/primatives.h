@@ -33,8 +33,8 @@ public:
     static vec3 random();
     static vec3 random(float min, float max);
 
-    bool near_zero() const {
-        auto s = 1e-8;
+    inline bool near_zero() const {
+        auto s = 1e-6;
         return (std::fabs(data[0]) < s) && (std::fabs(data[1]) < s) && 
             (std::fabs(data[2]) < s);
     }
@@ -55,7 +55,7 @@ float dot(const vec3& u, const vec3& v);
 vec3 cross(const vec3& u, const vec3& v);
 vec3 unit_vector(const vec3& v);
 vec3 random_unit_vector();
-vec3 random_on_hemiSphere(const vec3& normal);
+vec3 random_on_hemisphere(const vec3& normal);
 vec3 reflect(const vec3& v, const vec3& n);
 
 using point3 = vec3; // alias for coords

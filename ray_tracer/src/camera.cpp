@@ -64,7 +64,7 @@ Ray Camera::get_ray(size_t col, size_t row) {
 Color Camera::ray_color(const Ray& r, const size_t depth, const HittableList& world) 
     const {
     
-    const Interval ray_interval(.001, MY_INFINITY);
+    const Interval ray_interval(0.001, MY_INFINITY);
     
     if (depth <= 0) return Color(0,0,0);
     
