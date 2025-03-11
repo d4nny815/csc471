@@ -143,10 +143,9 @@ inline vec3 Camera::sample_square() {
  * @param world hittable objects in the world 
  */
 void Camera::render(const HittableList& world) {
-    // #pragma omp parallel for schedule(dynamic)
     for (size_t row = image_height - 1; row != 0; row--) {
-        fprintf(stderr, "\rScanlines remaining: %zu    ", row);
-        fflush(stderr);
+        // fprintf(stderr, "\rScanlines remaining: %zu    ", row);
+        // fflush(stderr);
         for (size_t col = image_width - 1; col != 0; col--) {
             Color pixel_color = Color(0, 0, 0); 
             
