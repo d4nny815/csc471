@@ -114,6 +114,14 @@ vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2 * dot(v, n) * n;
 }
 
+vec3 refract(const vec3& r, const vec3& n, const float eta_eta_prime) {
+    float cos_theta = fmin(dot(-r, n), 1.0);
+    vec3 r_perpendicular = eta_eta_prime * (r + cos_theta * n);
+    vec3 r_parallel = -sqrt(fabs(1.0f - r_perpendicular.length_squared())) * n;
+    
+    return r_perpendicular + r_parallel;
+}
+
 //*============================================================================
 //* ray
 //*============================================================================

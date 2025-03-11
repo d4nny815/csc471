@@ -2,7 +2,7 @@ PROJECT_NAME = raytracer
 IMG_NAME = img.ppm
 
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -pedantic -Winline -Werror=return-type
+CXXFLAGS = -std=c++11 -Wall -pedantic -Winline -Werror=return-type -fopenmp
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -21,14 +21,14 @@ release: dirs $(EXECUTABLE)
 debug: CXXFLAGS += -g
 debug: clean dirs $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): dirs $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: $(EXECUTABLE)
-	@./$(EXECUTABLE) > $(IMG_NAME)
+	@./$(EXECUTABLE)
 
 dirs:
 	mkdir -p $(BUILD_DIR)

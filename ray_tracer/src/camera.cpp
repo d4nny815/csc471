@@ -25,7 +25,9 @@ Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
     viewport_upper_left = viewport_upper_left - v_u / 2 - v_v / 2;
     pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
 
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    // std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+    frame_buffer = (uint32_t*)malloc(sizeof(uint32_t) * image_height * image_width);
 }
 
 /**
@@ -106,6 +108,7 @@ inline vec3 Camera::sample_square() {
  * @param world hittable objects in the world 
  */
 void Camera::render(const HittableList& world) {
+    // #pragma omp parallel for schedule(dynamic)
     for (size_t row = 0; row < image_height; row++) {
         fprintf(stderr, "\rScanlines remaining: %zu    ", (image_height - row));
         fflush(stderr);
@@ -119,10 +122,10 @@ void Camera::render(const HittableList& world) {
             }
 
             // average the accumulated color
-            write_color(pixel_color * scale_per_pixel);                    
+            write_color(pixel_color * scale_per_pixel, row, col);                    
         }
     }
-    fprintf(stderr, "\rDone                    \n");
+    write_framebuffer();
 }
 
 /**
@@ -134,18 +137,43 @@ void Camera::render(const HittableList& world) {
  * 
  * @param k The color vector containing RGB values in linear space.
  */
-void Camera::write_color(Color k) {
+void Camera::write_color(Color k, size_t row, size_t col) {
     static const Interval color_int(0, .999); 
 
     float r = linear_to_gamma(k.x());
     float g = linear_to_gamma(k.y());
     float b = linear_to_gamma(k.z());
 
-    int red = int(256 * color_int.clamp(r));
-    int green = int(256 * color_int.clamp(g));
-    int blue = int(256 * color_int.clamp(b));
+    uint8_t red = uint8_t(256 * color_int.clamp(r));
+    uint8_t green = uint8_t(256 * color_int.clamp(g));
+    uint8_t blue = uint8_t(256 * color_int.clamp(b));
 
-    printf("%d %d %d\n", red, green, blue);
+    uint32_t val = (red << 16) | (green << 8) | blue;
+    frame_buffer[row * image_width + col] = val;
+
+    // printf("%d %d %d\n", red, green, blue);
+}
+
+void Camera::write_framebuffer() {
+    FILE* file = fopen("img.ppm", "w");
+    fprintf(file, "P3\n%zu %zu\n255\n", image_width, image_height);
+
+    for (size_t row = 0; row < image_height; row++) {
+        fprintf(stderr, "\rScanlines remaining: %zu    ", (image_height - row));
+        fflush(stderr);
+
+        for (size_t col = 0; col < image_width; col++) {
+            auto ind = row * image_width + col;
+            uint8_t red = (frame_buffer[ind] >> 16) & 0xff;
+            uint8_t green = (frame_buffer[ind] >> 8) & 0xff;
+            uint8_t blue = frame_buffer[ind] & 0xff;
+            fprintf(file, "%d %d %d\n", red, green, blue);
+        }
+    }
+
+    fclose(file);
+    free(frame_buffer);
+    fprintf(stderr, "\rDone                    \n");
 }
 
 /**

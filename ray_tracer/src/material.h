@@ -30,9 +30,22 @@ public:
     Color albedo;
     float fuzz;
     
-    Metal(const Color& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
+    Metal(const Color& albedo, float fuzz) : albedo(albedo), 
+        fuzz(fuzz < 1 ? fuzz : 1) {}
     bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
         Ray& scattered) const override;
+};
+
+class Dielectric : public Material {
+public:
+    float refractive_index;
+
+    Dielectric(float refractive_index) : refractive_index(refractive_index) {}
+
+    bool scatter(const Ray& r, const HitRecord& hr, Color& attenuation, 
+        Ray& scattered) const override;
+
+    static float reflectance(float cosine, float refraction_index);
 };
 
 

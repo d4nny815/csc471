@@ -15,6 +15,7 @@ public:
     vec3 pixel_du, pixel_dv;
     vec3 viewport_upper_left;
     vec3 pixel00_loc;
+    uint32_t* frame_buffer = nullptr;
 
     size_t image_width;
     size_t image_height;
@@ -33,7 +34,8 @@ public:
 
     void render(const HittableList& world);
 
-    void write_color(Color k);
+    void write_color(Color k, size_t row, size_t col);
+    void write_framebuffer();
 
 };
 
