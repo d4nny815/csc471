@@ -12,20 +12,22 @@
  * @param up_vector The up direction for the camera.
 */
 Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
-    size_t child_rays, float fov_deg, const point3& position, 
-    const point3& look_at, const point3& up_vector) : image_width(image_width), 
+    size_t child_rays, float vfov_deg, float defocus_angle_deg, float focus_dist,
+    const point3& position, const point3& look_at, const point3& up_vector) : 
+    image_width(image_width), 
     image_height(static_cast<size_t>(image_width / aspect_ratio)),
     aspect_ratio(aspect_ratio), samples_per_pixel(samples_per_pixel),
-    scale_per_pixel(1.0f / samples_per_pixel), child_rays(child_rays),
+    scale_per_pixel(1.0f / samples_per_pixel), child_rays(child_rays), 
+    defocus_angle_deg(defocus_angle_deg), focus_dist(focus_dist),
     pos(position), look_at(look_at), up_vector(up_vector) {
 
     // calc focal length
-    focal_length = (position - look_at).length();
+    // focal_length = (position - look_at).length();
 
     // calc viewport dimensions based on field of view
-    float theta = degrees_to_radians(fov_deg);
-    float h = tan(theta / 2);
-    viewport_height = 2 * h * focal_length;
+    vfov = degrees_to_radians(vfov_deg);
+    float h = tan(vfov / 2);
+    viewport_height = 2 * h * focus_dist;
     viewport_width = viewport_height * aspect_ratio;
 
     // calc orthonormal basis vectors for the camera coordinate system
@@ -42,8 +44,13 @@ Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
     pixel_dv = v_v / image_height;
 
     // calc upper-left corner of the viewport
-    viewport_upper_left = position - (focal_length * w) - v_u / 2 - v_v / 2;
+    viewport_upper_left = position - (focus_dist * w) - v_u / 2 - v_v / 2;
     pixel00_loc = viewport_upper_left + 0.5f * (pixel_du + pixel_dv);
+    
+    // Calculate the camera defocus disk basis vectors.
+    auto defocus_radius = focus_dist * tan(degrees_to_radians(defocus_angle_deg / 2));
+    defocus_disk_u = u * defocus_radius;
+    defocus_disk_v = v * defocus_radius;
 
     frame_buffer = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * 
         image_height * image_width));
@@ -66,9 +73,18 @@ Ray Camera::get_ray(size_t col, size_t row) {
     vec3 pixel_sample = pixel00_loc + (u * pixel_du) + (v * pixel_dv);
     
     // dir from the cam to the sample pixel
-    vec3 ray_dir = pixel_sample - pos;
+    point3 ray_ori = (defocus_angle_deg <= 0) ? pos : defocus_disk_sample();
+    vec3 ray_dir = pixel_sample - ray_ori;
 
-    return Ray(pos, ray_dir);
+    return Ray(ray_ori, ray_dir);
+}
+
+/**
+ * 
+ */
+point3 Camera::defocus_disk_sample() const {
+    vec3 p = random_in_unit_disk();
+    return pos + (p.x() * defocus_disk_u) + (p.y() * defocus_disk_v);
 }
 
 /**
@@ -128,10 +144,10 @@ inline vec3 Camera::sample_square() {
  */
 void Camera::render(const HittableList& world) {
     // #pragma omp parallel for schedule(dynamic)
-    for (size_t row = 0; row < image_height; row++) {
-        fprintf(stderr, "\rScanlines remaining: %zu    ", (image_height - row));
+    for (size_t row = image_height - 1; row != 0; row--) {
+        fprintf(stderr, "\rScanlines remaining: %zu    ", row);
         fflush(stderr);
-        for (size_t col = 0; col < image_width; col++) {
+        for (size_t col = image_width - 1; col != 0; col--) {
             Color pixel_color = Color(0, 0, 0); 
             
             // cast multiple rays per pixel for anti aliasing
