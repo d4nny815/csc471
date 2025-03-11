@@ -7,25 +7,32 @@
 
 class Camera {
 public:
-    float focal_length;
-    float viewport_height;
-    float viewport_width;
-    point3 pos;
-    vec3 v_u, v_v;
-    vec3 pixel_du, pixel_dv;
-    vec3 viewport_upper_left;
-    vec3 pixel00_loc;
-    uint32_t* frame_buffer = nullptr;
+    size_t image_width;            
+    size_t image_height;          
+    float aspect_ratio;            
+    size_t samples_per_pixel;       
+    float scale_per_pixel;          
+    size_t child_rays;            
 
-    size_t image_width;
-    size_t image_height;
-    float aspect_ratio;
-    size_t samples_per_pixel;
-    float scale_per_pixel;
-    size_t child_rays;
+    point3 pos;               
+    point3 look_at;                
+    point3 up_vector;             
+    float focal_length;            
 
-    Camera(float aspect_ratio, size_t image_width, size_t sample_per_pixel,
-        size_t child_rays);
+    float viewport_width;          
+    float viewport_height;         
+
+    vec3 w, u, v;                  // cam basis vectors
+    vec3 v_u, v_v;                 // viewport vectors.
+    vec3 pixel_du, pixel_dv;       // per-pixel delta vectors.
+    vec3 viewport_upper_left;       
+    vec3 pixel00_loc;             // location of the center of pixel (0,0)
+    uint32_t* frame_buffer;        
+    
+
+    Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
+        size_t child_rays, float fov_deg, const point3& position, 
+        const point3& look_at, const point3& up_vector);
 
     Ray get_ray(size_t col, size_t row);
     Color ray_color(const Ray& r, const size_t depth, const HittableList& world) 

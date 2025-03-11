@@ -1,33 +1,52 @@
 #include "camera.h"
 
-Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel,
-    size_t child_rays) : image_width(image_width), 
+/**
+ * @brief Constructs a Camera object with specified parameters.
+ * @param aspect_ratio The aspect ratio of the image (width/height).
+ * @param image_width The width of the output image in pixels.
+ * @param samples_per_pixel The number of samples per pixel for anti-aliasing.
+ * @param child_rays The number of child rays for each primary ray.
+ * @param fov_deg The field of view in degrees, smaller zooms in
+ * @param position The position of the camera in world space.
+ * @param look_at The point the camera is looking at.
+ * @param up_vector The up direction for the camera.
+*/
+Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
+    size_t child_rays, float fov_deg, const point3& position, 
+    const point3& look_at, const point3& up_vector) : image_width(image_width), 
     image_height(static_cast<size_t>(image_width / aspect_ratio)),
     aspect_ratio(aspect_ratio), samples_per_pixel(samples_per_pixel),
-    scale_per_pixel(1.0 / samples_per_pixel), child_rays(child_rays) {
+    scale_per_pixel(1.0f / samples_per_pixel), child_rays(child_rays),
+    pos(position), look_at(look_at), up_vector(up_vector) {
 
-    // set up camera position and viewport
-    focal_length = 1.0f;
-    viewport_height = 2.0f;
+    // calc focal length
+    focal_length = (position - look_at).length();
+
+    // calc viewport dimensions based on field of view
+    float theta = degrees_to_radians(fov_deg);
+    float h = tan(theta / 2);
+    viewport_height = 2 * h * focal_length;
     viewport_width = viewport_height * aspect_ratio;
-    pos = point3(0, 0, 0);
 
-    // calc viewport vectors
-    v_u = vec3(viewport_width, 0, 0);
-    v_v = vec3(0, -viewport_height, 0);
+    // calc orthonormal basis vectors for the camera coordinate system
+    w = unit_vector(position - look_at);
+    u = unit_vector(cross(up_vector, w));
+    v = cross(w, u);
 
-    // calc delta viewport vectors
+    // calc viewport edge vectors
+    v_u = viewport_width * u;
+    v_v = viewport_height * -v;
+
+    // calc pixel delta vectors
     pixel_du = v_u / image_width;
     pixel_dv = v_v / image_height;
 
-    // calc upper-left corner of viewport
-    viewport_upper_left = pos - vec3(0, 0, focal_length);
-    viewport_upper_left = viewport_upper_left - v_u / 2 - v_v / 2;
-    pixel00_loc = viewport_upper_left + 0.5 * (pixel_du + pixel_dv);
+    // calc upper-left corner of the viewport
+    viewport_upper_left = position - (focal_length * w) - v_u / 2 - v_v / 2;
+    pixel00_loc = viewport_upper_left + 0.5f * (pixel_du + pixel_dv);
 
-    // std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
-    frame_buffer = (uint32_t*)malloc(sizeof(uint32_t) * image_height * image_width);
+    frame_buffer = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * 
+        image_height * image_width));
 }
 
 /**
