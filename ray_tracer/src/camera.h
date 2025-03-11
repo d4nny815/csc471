@@ -7,6 +7,7 @@
 
 class Camera {
 public:
+    char* image_name;
     size_t image_width;            
     size_t image_height;          
     float aspect_ratio;            
@@ -35,7 +36,7 @@ public:
     uint32_t* frame_buffer;        
     
 
-    Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
+    Camera(char* filename, float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
         size_t child_rays, float vfov_deg, float defocus_angle_deg, float focus_dist,
         const point3& position, const point3& look_at, const point3& up_vector);
 

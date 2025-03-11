@@ -14,6 +14,11 @@ public:
 
     vec3() : data{0, 0, 0} {};
     vec3(float a, float b, float c) : data{a, b, c} {};
+    vec3(uint32_t hexcode) : data{
+        static_cast<float>((hexcode >> 16) & 0xff) / 255.0f,
+        static_cast<float>((hexcode >> 8) & 0xff) / 255.0f,
+        static_cast<float>((hexcode) & 0xff) / 255.0f
+    } {};
 
     // getters
     float x() const { return data[0]; }

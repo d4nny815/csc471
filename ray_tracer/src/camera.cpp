@@ -11,10 +11,10 @@
  * @param look_at The point the camera is looking at.
  * @param up_vector The up direction for the camera.
 */
-Camera::Camera(float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
+Camera::Camera(char* filename, float aspect_ratio, size_t image_width, size_t samples_per_pixel, 
     size_t child_rays, float vfov_deg, float defocus_angle_deg, float focus_dist,
     const point3& position, const point3& look_at, const point3& up_vector) : 
-    image_width(image_width), 
+    image_name(filename), image_width(image_width), 
     image_height(static_cast<size_t>(image_width / aspect_ratio)),
     aspect_ratio(aspect_ratio), samples_per_pixel(samples_per_pixel),
     scale_per_pixel(1.0f / samples_per_pixel), child_rays(child_rays), 
@@ -189,7 +189,7 @@ void Camera::write_color(Color k, size_t row, size_t col) {
 }
 
 void Camera::write_framebuffer() {
-    FILE* file = fopen("img.ppm", "w");
+    FILE* file = fopen(image_name, "w");
     fprintf(file, "P3\n%zu %zu\n255\n", image_width, image_height);
 
     for (size_t row = 0; row < image_height; row++) {
