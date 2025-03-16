@@ -87,50 +87,36 @@ point3 Camera::defocus_disk_sample() const {
     return pos + (p.x() * defocus_disk_u) + (p.y() * defocus_disk_v);
 }
 
-/**
- * @brief recursively calc the color along a ray
- * 
- * This function traces a ray into the scene and determines the color resulting
- *  from any interactions. It uses recursion to handle multiple bounces of light
- * 
- * @param r the ray to trace into the scene
- * @param depth max number of bounces allowed for the ray
- * @param world hittable objects that can interact with the ray
- * @return resulting color from the ray interaction.
- */
+__global__ void render_kernel(Color* framebuffer, int image_width, int image_height, 
+    int samples_per_pixel, Camera camera, HittableList world, 
+    float scale_per_pixel) {
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (col >= image_width || row >= image_height) return;
+
+    Color pixel_color = Color(0, 0, 0);
+
+    // Monte Carlo sampling for anti-aliasing
+    for (int i = 0; i < samples_per_pixel; i++) {
+    Ray r = camera.get_ray(col, row);
+    pixel_color += camera.ray_color(r, camera.child_rays, world);
+    }
+
+    // Average the accumulated color
+    framebuffer[row * image_width + col] = pixel_color * scale_per_pixel;
+}
+
+
 Color Camera::ray_color(const Ray& r, const size_t depth, const HittableList& world) 
     const {
     
-    const Interval ray_interval(0.001, MY_INFINITY);
-    Color accumulated_color(1.0, 1.0, 1.0); // Start with white (no attenuation)
     Ray current_ray = r;
-    size_t current_depth = depth;
 
-    while (current_depth > 0) {
-        HitRecord hr;
-        
-        if (world.hit(current_ray, ray_interval, hr)) {
-            Ray scattered;
-            Color attenuation;
-            
-            if (hr.mat->scatter(current_ray, hr, attenuation, scattered)) {
-                accumulated_color *= attenuation;  // Apply attenuation
-                current_ray = scattered;  // Continue tracing the scattered ray
-            } else {
-                return BLACK * accumulated_color; // Absorb light (return black)
-            }
-        } else {
-            // If the ray did not hit anything, return the sky color
-            const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
-            vec3 unit_direction = unit_vector(current_ray.dir);
-            auto a = 0.5 * (unit_direction.y() + 1.0);
-            return accumulated_color * ((1.0 - a) * WHITE + a * SKY_BLUE);
-        }
-
-        current_depth--;
-    }
-
-    return Color(0, 0, 0); // Return black if maximum depth is reached
+    const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
+    vec3 unit_direction = unit_vector(current_ray.dir);
+    auto a = 0.5 * (unit_direction.y() + 1.0);
+    return ((1.0 - a) * WHITE + a * SKY_BLUE);
 }
 
 /**
@@ -148,23 +134,31 @@ inline vec3 Camera::sample_square() {
  * @param world hittable objects in the world 
  */
 void Camera::render(const HittableList& world) {
-    for (size_t row = image_height - 1; row != 0; row--) {
-        fprintf(stderr, "\rScanlines remaining: %zu    ", row);
-        fflush(stderr);
-        for (size_t col = image_width - 1; col != 0; col--) {
-            Color pixel_color = Color(0, 0, 0); 
-            
-            // cast multiple rays per pixel for anti aliasing
-            for (size_t i = 0; i < samples_per_pixel; i++) {
-                Ray r = get_ray(col, row);
-                pixel_color += ray_color(r, child_rays, world);
-            }
+    int num_pixels = image_width * image_height;
+    Color* d_framebuffer;
+    
+    // Allocate memory on the GPU
+    cudaMalloc(&d_framebuffer, num_pixels * sizeof(Color));
 
-            // average the accumulated color
-            write_color(pixel_color * scale_per_pixel, row, col);                    
-        }
-    }
-    write_framebuffer();
+    // Define CUDA block and grid dimensions
+    dim3 block_size(16, 16);
+    dim3 grid_size((image_width + block_size.x - 1) / block_size.x, 
+                   (image_height + block_size.y - 1) / block_size.y);
+
+    // Launch CUDA kernel
+    render_kernel<<<grid_size, block_size>>>(d_framebuffer, image_width, image_height, 
+                                             samples_per_pixel, *this, world, scale_per_pixel);
+
+    // Copy framebuffer from GPU to CPU
+    Color* h_framebuffer = new Color[num_pixels];
+    cudaMemcpy(h_framebuffer, d_framebuffer, num_pixels * sizeof(Color), cudaMemcpyDeviceToHost);
+
+    // Write framebuffer to file or screen
+    write_framebuffer(h_framebuffer);
+
+    // Cleanup
+    delete[] h_framebuffer;
+    cudaFree(d_framebuffer);
 }
 
 /**
