@@ -30,9 +30,9 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 run: release
 	./$(EXECUTABLE) img.ppm 300 20 5
 	# ./$(EXECUTABLE) img100_50_small.ppm 600 100 50
-	# ./$(EXECUTABLE) img100_50.ppm 1800 100 50
-	# ./$(EXECUTABLE) img500_50.ppm 1800 500 50
-	# ./$(EXECUTABLE) img500_500.ppm 1800 500 500
+	# ./$(EXECUTABLE) img100_50.ppm 900 100 50
+	# ./$(EXECUTABLE) img500_50.ppm 900 500 50
+	# ./$(EXECUTABLE) img500_500.ppm 900 500 500
 
 dirs:
 	mkdir -p $(BUILD_DIR)
