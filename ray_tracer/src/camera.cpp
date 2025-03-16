@@ -102,30 +102,35 @@ Color Camera::ray_color(const Ray& r, const size_t depth, const HittableList& wo
     const {
     
     const Interval ray_interval(0.001, MY_INFINITY);
-    
-    if (depth <= 0) return Color(0,0,0);
-    
-    HitRecord hr;
-    // check if ray hits anything in the world
-    if (world.hit(r, ray_interval, hr)) {
-        Ray scattered;
-        Color attenuation;
+    Color accumulated_color(1.0, 1.0, 1.0); // Start with white (no attenuation)
+    Ray current_ray = r;
+    size_t current_depth = depth;
 
-        // check if rays scatters if so trace it
-        if (hr.mat->scatter(r, hr, attenuation, scattered))         
-            return attenuation * ray_color(scattered, depth - 1, world);
+    while (current_depth > 0) {
+        HitRecord hr;
         
-        // if ray isnt scattered absorb the light (return black)
-        return BLACK;
+        if (world.hit(current_ray, ray_interval, hr)) {
+            Ray scattered;
+            Color attenuation;
+            
+            if (hr.mat->scatter(current_ray, hr, attenuation, scattered)) {
+                accumulated_color *= attenuation;  // Apply attenuation
+                current_ray = scattered;  // Continue tracing the scattered ray
+            } else {
+                return BLACK * accumulated_color; // Absorb light (return black)
+            }
+        } else {
+            // If the ray did not hit anything, return the sky color
+            const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
+            vec3 unit_direction = unit_vector(current_ray.dir);
+            auto a = 0.5 * (unit_direction.y() + 1.0);
+            return accumulated_color * ((1.0 - a) * WHITE + a * SKY_BLUE);
+        }
+
+        current_depth--;
     }
 
-    // If the ray did not hit anything, return the sky color.
-    // The sky is interpolated from white to blue based on y axis
-    const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
-    vec3 unit_direction = unit_vector(r.dir);
-    auto a = 0.5 * (unit_direction.y() + 1.0);
-
-    return (1.0 - a) * WHITE + a * SKY_BLUE;
+    return Color(0, 0, 0); // Return black if maximum depth is reached
 }
 
 /**
@@ -144,8 +149,8 @@ inline vec3 Camera::sample_square() {
  */
 void Camera::render(const HittableList& world) {
     for (size_t row = image_height - 1; row != 0; row--) {
-        // fprintf(stderr, "\rScanlines remaining: %zu    ", row);
-        // fflush(stderr);
+        fprintf(stderr, "\rScanlines remaining: %zu    ", row);
+        fflush(stderr);
         for (size_t col = image_width - 1; col != 0; col--) {
             Color pixel_color = Color(0, 0, 0); 
             
