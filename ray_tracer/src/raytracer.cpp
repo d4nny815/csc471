@@ -31,26 +31,27 @@ int main(int argc, char** argv) {
     size_t samples_per_ray = argc > 3 ? atoi(argv[3]) : DEF_SAMPLES_PER_RAY;
     size_t child_rays = argc > 4 ? atoi(argv[4]) : DEF_CHILD_RAYS;
     
-    float look_radius = 3.0f;  // Distance from the camera to the look-at point
-    float pitch = -10;           // rotation around X-axis
-    float yaw = -50;             // rotation around Y-axis
+    // float look_radius = 3.0f;  // Distance from the camera to the look-at point
+    // float pitch = -10;           // rotation around X-axis
+    // float yaw = -50;             // rotation around Y-axis
+    float look_radius = 5.0f;  // Distance from the camera to the look-at point
+    float pitch = 0;           // rotation around X-axis
+    float yaw = 50;             // rotation around Y-axis
 
     // Convert pitch & yaw to Cartesian coordinates
-    const point3 lookat = point3(0, 1, 0);
+    const point3 lookat = point3(0, .5, 0);
     point3 cam_pos = point3(
         look_radius * sin(degrees_to_radians(yaw)) * cos(degrees_to_radians(pitch)),  
         look_radius * sin(degrees_to_radians(pitch)) + lookat.y(),             
         look_radius * cos(degrees_to_radians(yaw)) * cos(degrees_to_radians(pitch))  
     );
-    cam_pos.print(stderr);
-
     // Compute correct up vector
     const vec3 world_up(0, 1, 0);
     const vec3 forward = unit_vector(lookat - cam_pos);
     const vec3 right = unit_vector(cross(world_up, forward));
     const vec3 up = cross(forward, right); // Ensure up is perpendicular
     
-    const float defocus_ang_deg = 5.0f;
+    const float defocus_ang_deg = -5.0f;
     const float focus_dist = 1;
 
     Camera cam(filename, aspect_ratio, image_width, samples_per_ray, child_rays,
@@ -65,12 +66,12 @@ int main(int argc, char** argv) {
             point3 center(a + 0.9*rand_float(), 0.2, b + 0.9*rand_float());
             if ((center - point3(4, 0.2, 0)).length() > 0.9) {
                 shared_ptr<Material> sphere_material;
-                if (choose_mat < 0.8) {
+                if (choose_mat < 0.6) {
                     // diffuse
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
                     world.add(make_shared<Sphere>(center, 0.2, sphere_material));
-                } else if (choose_mat < 0.95) {
+                } else if (choose_mat < 0.9) {
                     // metal
                     auto albedo = Color::random(0.5, 1);
                     auto fuzz = rand_float(0, 1);

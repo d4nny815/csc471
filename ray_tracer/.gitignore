@@ -1,5 +1,6 @@
 .vscode/
 build/
 *.ppm
+*.jpg
 raytracer
 .idea/

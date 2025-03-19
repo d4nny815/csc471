@@ -126,9 +126,7 @@ inline vec3 cross(const vec3& u, const vec3& v) {
             u.data[0] * v.data[1] - u.data[1] * v.data[0]);
 }
 
-inline vec3 unit_vector(const vec3& v) {
-    return v / v.length();
-}
+vec3 unit_vector(const vec3& v);
 
 inline vec3 random_unit_vector() {
     while (true) {
