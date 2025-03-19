@@ -1,4 +1,7 @@
 #include "camera.h"
+#include <cuda_runtime.h>
+#include <curand_kernel.h>
+#include "cuda_help.h"
 
 /**
  * @brief Constructs a Camera object with specified parameters.
@@ -62,9 +65,10 @@ Camera::Camera(char* filename, float aspect_ratio, size_t image_width, size_t sa
  * @param row current row in the viewport
  * @return ray originating from the camera to the sampled pixel
  */
-Ray Camera::get_ray(size_t col, size_t row) {
+__host__ __device__ Ray Camera::get_ray(int col, int row) {
     // add random jitter to enable anti-aliasing
-    vec3 offset = sample_square(); 
+    // vec3 offset = sample_square(); 
+    vec3 offset(0, 0, 0); 
 
     auto u = col + offset.x();
     auto v = row + offset.y();
@@ -76,18 +80,67 @@ Ray Camera::get_ray(size_t col, size_t row) {
     point3 ray_ori = (defocus_angle_deg <= 0) ? pos : defocus_disk_sample();
     vec3 ray_dir = pixel_sample - ray_ori;
 
+    // printf("%d x %d %f x %f rOrigin <%f, %f, %f> rDir <%f, %f, %f>\n", 
+    //     col, row, u, v,
+    //     ray_ori.x(), ray_ori.y(), ray_ori.z(),
+    //     ray_dir.x(), ray_dir.y(), ray_dir.z());
+    
     return Ray(ray_ori, ray_dir);
 }
 
 /**
  * 
  */
-point3 Camera::defocus_disk_sample() const {
+__host__ __device__ point3 Camera::defocus_disk_sample() const {
     vec3 p = random_in_unit_disk();
     return pos + (p.x() * defocus_disk_u) + (p.y() * defocus_disk_v);
 }
 
-__global__ void render_kernel(Color* framebuffer, int image_width, int image_height, 
+__host__ __device__ Color Camera::ray_color(const Ray& r, const size_t depth, const HittableList& world) 
+    const {
+    
+    const Interval ray_interval(0.001, MY_INFINITY);
+    Color accumulated_color(1.0, 1.0, 1.0); // Start with white (no attenuation)
+    Ray current_ray = r;
+    size_t current_depth = depth;
+
+    while (current_depth > 0) {
+        HitRecord hr;
+        
+        if (world.hit(current_ray, ray_interval, hr)) {
+            Ray scattered;
+            Color attenuation;
+            
+            if (hr.mat->scatter(current_ray, hr, attenuation, scattered)) {
+                accumulated_color *= attenuation;  // Apply attenuation
+                current_ray = scattered;  // Continue tracing the scattered ray
+            } else {
+                return BLACK * accumulated_color; // Absorb light (return black)
+            }
+        } else {
+            // If the ray did not hit anything, return the sky color
+            const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
+            vec3 unit_direction = unit_vector(current_ray.dir);
+            auto a = 0.5 * (unit_direction.y() + 1.0);
+            return accumulated_color * ((1.0 - a) * WHITE + a * SKY_BLUE);
+        }
+
+        current_depth--;
+    }
+
+    return Color(0, 0, 0); // Return black if maximum depth is reached
+}
+
+/**
+ * @brief return vector with x = [-.5, .5] and y = [-.5, .5] 
+ */
+__host__ __device__ inline vec3 Camera::sample_square() {
+    return vec3(rand_float() - 0.5, rand_float() - 0.5, 0);
+}
+
+
+
+__global__ void render_kernel(uint32_t* framebuffer, int image_width, int image_height, 
     int samples_per_pixel, Camera camera, HittableList world, 
     float scale_per_pixel) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -95,50 +148,30 @@ __global__ void render_kernel(Color* framebuffer, int image_width, int image_hei
 
     if (col >= image_width || row >= image_height) return;
 
-    Color pixel_color = Color(0, 0, 0);
+    Color pixel_color = Color(1, 0, 0);
 
-    // Monte Carlo sampling for anti-aliasing
-    for (int i = 0; i < samples_per_pixel; i++) {
+    // // Monte Carlo sampling for anti-aliasing
+    // for (int i = 0; i < samples_per_pixel; i++) {
     Ray r = camera.get_ray(col, row);
-    pixel_color += camera.ray_color(r, camera.child_rays, world);
-    }
+    pixel_color = camera.ray_color(r, camera.child_rays, world);
+    // printf("%d x %d rOrigin <%f, %f, %f> rDir <%f, %f, %f> Color: [%f, %f, %f]\n", 
+    //     col, row, 
+    //     r.origin.x(), r.origin.y(), r.origin.z(),
+    //     r.dir.x(), r.dir.y(), r.dir.z(),
+    //     pixel_color.x(), pixel_color.y(), pixel_color.z());
+    // }
 
     // Average the accumulated color
-    framebuffer[row * image_width + col] = pixel_color * scale_per_pixel;
+    // framebuffer[row * image_width + col] = pixel_color * scale_per_pixel;
+    framebuffer[row * image_width + col] = write_color(pixel_color);
 }
 
-
-Color Camera::ray_color(const Ray& r, const size_t depth, const HittableList& world) 
-    const {
-    
-    Ray current_ray = r;
-
-    const Color SKY_BLUE = Color(0.5, 0.7, 1.0);
-    vec3 unit_direction = unit_vector(current_ray.dir);
-    auto a = 0.5 * (unit_direction.y() + 1.0);
-    return ((1.0 - a) * WHITE + a * SKY_BLUE);
-}
-
-/**
- * @brief return vector with x = [-.5, .5] and y = [-.5, .5] 
- */
-inline vec3 Camera::sample_square() {
-    return vec3(rand_float() - 0.5, rand_float() - 0.5, 0);
-}
-
-/**
- * @brief render the scene
- * 
- * shoot multiple rays from cam to each pixel in the viewport to the world
- * 
- * @param world hittable objects in the world 
- */
 void Camera::render(const HittableList& world) {
     int num_pixels = image_width * image_height;
-    Color* d_framebuffer;
+    uint32_t* d_framebuffer;
     
     // Allocate memory on the GPU
-    cudaMalloc(&d_framebuffer, num_pixels * sizeof(Color));
+    CHECK_CUDA(cudaMalloc(&d_framebuffer, num_pixels * sizeof(uint32_t)));
 
     // Define CUDA block and grid dimensions
     dim3 block_size(16, 16);
@@ -148,17 +181,18 @@ void Camera::render(const HittableList& world) {
     // Launch CUDA kernel
     render_kernel<<<grid_size, block_size>>>(d_framebuffer, image_width, image_height, 
                                              samples_per_pixel, *this, world, scale_per_pixel);
+    CHECK_CUDA(cudaGetLastError());
+    CHECK_CUDA(cudaDeviceSynchronize());
 
     // Copy framebuffer from GPU to CPU
-    Color* h_framebuffer = new Color[num_pixels];
-    cudaMemcpy(h_framebuffer, d_framebuffer, num_pixels * sizeof(Color), cudaMemcpyDeviceToHost);
+    CHECK_CUDA(cudaMemcpy(frame_buffer, d_framebuffer, 
+                num_pixels * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
     // Write framebuffer to file or screen
-    write_framebuffer(h_framebuffer);
+    write_framebuffer();
 
     // Cleanup
-    delete[] h_framebuffer;
-    cudaFree(d_framebuffer);
+    CHECK_CUDA(cudaFree(d_framebuffer));
 }
 
 /**
@@ -170,19 +204,17 @@ void Camera::render(const HittableList& world) {
  * 
  * @param k The color vector containing RGB values in linear space.
  */
-void Camera::write_color(Color k, size_t row, size_t col) {
-    static const Interval color_int(0, .999); 
-
+__host__ __device__ uint32_t write_color(Color k) {
     float r = linear_to_gamma(k.x());
     float g = linear_to_gamma(k.y());
     float b = linear_to_gamma(k.z());
 
-    uint8_t red = uint8_t(256 * color_int.clamp(r));
-    uint8_t green = uint8_t(256 * color_int.clamp(g));
-    uint8_t blue = uint8_t(256 * color_int.clamp(b));
+    uint8_t red = uint8_t(256 * Interval(0, .999).clamp(r));
+    uint8_t green = uint8_t(256 * Interval(0, .999).clamp(g));
+    uint8_t blue = uint8_t(256 * Interval(0, .999).clamp(b));
 
     uint32_t val = (red << 16) | (green << 8) | blue;
-    frame_buffer[row * image_width + col] = val;
+    return val;
 
     // printf("%d %d %d\n", red, green, blue);
 }
@@ -207,15 +239,4 @@ void Camera::write_framebuffer() {
     fclose(file);
     free(frame_buffer);
     fprintf(stderr, "\rDone                    \n");
-}
-
-/**
- * @brief convert linear color component to correct gamma-corrected color
- * 
- * the standard gamma correction assumes a gamma of 2.0, which is achieved 
- * by taking the square root of the component.
- * 
- */
-inline float linear_to_gamma(float linear_comp) {
-    return linear_comp > 0 ? std::sqrt(linear_comp) : 0;
 }

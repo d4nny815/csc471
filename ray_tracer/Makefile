@@ -3,7 +3,7 @@ IMG_NAME = img.ppm
 
 NVCC = nvcc
 
-NVCC_FLAGS = -Wall-arch=sm_61 -Wno-deprecated-gpu-targets 
+NVCC_FLAGS = -arch=sm_61 -Wno-deprecated-gpu-targets 
 
 SRC_DIR = src
 BUILD_DIR = build

@@ -40,19 +40,21 @@ public:
         size_t child_rays, float vfov_deg, float defocus_angle_deg, float focus_dist,
         const point3& position, const point3& look_at, const point3& up_vector);
 
-    Ray get_ray(size_t col, size_t row);
-    Color ray_color(const Ray& r, const size_t depth, const HittableList& world) 
+    __host__ __device__ Ray get_ray(int col, int row);
+    __host__ __device__ Color ray_color(const Ray& r, const size_t depth, const HittableList& world) 
         const;
-    inline vec3 sample_square();
-    point3 defocus_disk_sample() const;
+    __host__ __device__ inline vec3 sample_square();
+    __host__ __device__ point3 defocus_disk_sample() const;
 
     void render(const HittableList& world);
 
-    void write_color(Color k, size_t row, size_t col);
     void write_framebuffer();
 
 };
 
-inline float linear_to_gamma(float linear_comp);
+__host__ __device__ uint32_t write_color(Color k);
+__host__ __device__ inline float linear_to_gamma(float linear_comp) {
+    return linear_comp > 0 ? std::sqrt(linear_comp) : 0;
+}
 
 #endif /* camera.h */

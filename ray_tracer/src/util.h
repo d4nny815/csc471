@@ -18,12 +18,20 @@ inline float degrees_to_radians(float degrees) {
     return degrees * PI / 180.0;
 }
 
-inline float rand_float() {
+__host__ inline float rand_float() {
     return std::rand() / (RAND_MAX + 1.0);
 }
 
-inline float rand_float(float min, float max) {
+__host__ inline float rand_float(float min, float max) {
     return min + (max - min) * rand_float();
 }
+
+// __device__ inline float rand_float() {
+//     return std::rand() / (RAND_MAX + 1.0);
+// }
+
+// __device__ inline float rand_float(float min, float max) {
+//     return min + (max - min) * rand_float();
+// }
 
 #endif /* util.h */
