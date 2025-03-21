@@ -2,7 +2,7 @@ PROJECT_NAME = raytracer
 IMG_NAME = img.ppm
 
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -pedantic -Winline -Werror=return-type -fopenmp
+CXXFLAGS = -std=c++11 -Wall -pedantic -Winline -Werror=return-type
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -28,8 +28,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: release
-	./$(EXECUTABLE) img.ppm 300 20 5
-	convert img.ppm img.jpg
+	./$(EXECUTABLE) $(IMG_NAME).ppm 900 1500 500 -10
 
 dirs:
 	mkdir -p $(BUILD_DIR)
